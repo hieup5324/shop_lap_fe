@@ -30,7 +30,11 @@ module.exports = {
         grey3: '#E3E8F1',
         light: '#F9FBFC',
         white: '#FFF'
-      }
+      },
+      screens: {
+        'lg': '1440px',
+        // => @media (min-width: 1440px) { ... }
+      },
     },
   },
   plugins: [],
