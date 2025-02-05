@@ -66,7 +66,7 @@ const Header: React.FC = () => {
           </Row>
         </Col>
 
-        {isAuthenticated && (
+        {!isAuthenticated && (
           <Col className="mr-[-30px]">
             <Row justify={'center'} gutter={16}>
               <Col>
@@ -84,7 +84,7 @@ const Header: React.FC = () => {
           </Col>
         )}
 
-        {!isAuthenticated && (
+        {isAuthenticated && (
           <Col className="mr-[-30px]">
             <Tooltip
               // trigger={'click'}

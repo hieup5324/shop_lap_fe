@@ -50,7 +50,7 @@ const LoginModal: React.FC<Props> = props => {
             password
           }
         )
-
+        console.log('res:', res)
         if (res?.access_token) {
           const token = res.access_token
 
@@ -78,8 +78,47 @@ const LoginModal: React.FC<Props> = props => {
 
   const loginGoogleHandler = async () => {
     try {
+      const googleLoginUrl = 'http://localhost:3001/google/login-google'
+
+      const popup = window.open(
+        googleLoginUrl,
+        'googleLogin',
+        'width=500,height=600'
+      )
+
+      if (!popup) {
+        throw new Error('Không thể mở cửa sổ đăng nhập Google')
+      }
+
+      const listener = (event: MessageEvent) => {
+        if (event.origin !== 'http://localhost:3001') return
+
+        const userData = event.data
+        console.log('userData:', userData)
+        if (userData?.access_token) {
+          const token = userData.access_token
+
+          setCookie(COOKIE_KEY.TOKEN, token, 365)
+
+          if (isAuthenticatedJwt(token)) {
+            dispatch(setIsAuthenticated(true))
+            setVisible(false)
+
+            message.success(`Đăng nhập thành công`)
+          }
+        }
+
+        setLocalStorageItem(
+          LOCAL_STORAGE_KEY.USER_INFO,
+          JSON.stringify(userData)
+        )
+
+        window.removeEventListener('message', listener)
+      }
+
+      window.addEventListener('message', listener)
     } catch (error) {
-      console.log(error)
+      console.error('Lỗi đăng nhập Google:', error)
     }
   }
 
@@ -123,14 +162,7 @@ const LoginModal: React.FC<Props> = props => {
         <Divider>Hoặc</Divider>
 
         <Row gutter={16}>
-          <Col
-            className="cursor-pointer"
-            span={12}
-            onClick={() =>
-              (window.location.href = process.env
-                .NEXT_PUBLIC_LOGIN_GOOGLE as string)
-            }
-          >
+          <Col className="cursor-pointer" span={12}>
             <Row
               onClick={loginGoogleHandler}
               justify={'center'}
