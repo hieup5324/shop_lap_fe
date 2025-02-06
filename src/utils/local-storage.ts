@@ -5,7 +5,7 @@ export const getLocalStorageLength = () => localStorage.length
 export const clearLocalStorage = () => localStorage.clear()
 
 export const getLocalStorageItem = (key: string): string | null =>
-  localStorage.getItem(`${LOCAL_STORAGE_KEY.PREFIX}-${key}`)
+  localStorage.getItem(`${key}`)
 
 export const setLocalStorageItem = (key: string, value: string) =>
   localStorage.setItem(`${key}`, value)

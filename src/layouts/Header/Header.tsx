@@ -124,7 +124,6 @@ const Header: React.FC = () => {
                   </Link>
 
                   <Link href={PATH.ORDERS}>
-                    {/* <Row className="rounded px-2 py-2 hover:bg-slate-200"> */}
                     <Row
                       gutter={8}
                       align={'middle'}
@@ -142,8 +141,7 @@ const Header: React.FC = () => {
                     </Row>
                   </Link>
 
-                  <Link href={`#`}>
-                    {/* <Row className="rounded px-2 py-2 hover:bg-slate-200"> */}
+                  <Link href={PATH.CHANGE_PASSWORD}>
                     <Row
                       gutter={8}
                       align={'middle'}
@@ -156,7 +154,7 @@ const Header: React.FC = () => {
                       </Col>
 
                       <Col>
-                        <Title level={5} isNormal text={`Cài đặt`} />
+                        <Title level={5} isNormal text={`Đổi mật khẩu`} />
                       </Col>
                     </Row>
                   </Link>

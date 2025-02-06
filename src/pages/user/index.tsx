@@ -1,7 +1,11 @@
 import UserInformation from '@/src/modules/UserModule/UserInformation'
 
 const User = () => {
-  return <UserInformation />
+  return (
+    <div>
+      <UserInformation />
+    </div>
+  )
 }
 
 export default User

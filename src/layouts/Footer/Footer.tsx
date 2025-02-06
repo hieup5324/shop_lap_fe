@@ -6,14 +6,14 @@ const Footer: React.FC = () => {
   return (
     <div className="bg-white px-[90px] py-8">
       <Title
-        text={`CÔNG TY CỔ PHẦN THƯƠNG MẠI MÁY TÍNH HOÀNG MINH`}
+        text={`CÔNG TY CỔ PHẦN THƯƠNG MẠI MÁY TÍNH MiNH HIẾU`}
         level={4}
         className="mb-2"
       />
 
       <Typography>
         Giấy chứng nhận ĐKDN số 010894043873 do Sở Kế hoạch và Đầu tư Thành phố
-        Hà Nội cấp ngày 11/10/2019
+        Hà Nội cấp ngày 11/01/2025
       </Typography>
 
       <Row gutter={8}>

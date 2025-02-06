@@ -40,6 +40,10 @@ const UserInformation = () => {
         <div className="mt-6">
           <div className="mt-6 font-light">
             <div className="flex gap-4">
+              <p className="font-medium">Email :</p>
+              <p>{userData.email}</p>
+            </div>
+            <div className="flex gap-4">
               <p className="font-medium">Full Name :</p>
               {userData.firstName + ' ' + userData.lastName}
               <p></p>
@@ -49,8 +53,8 @@ const UserInformation = () => {
               <p>{userData.phone || ''}</p>
             </div>
             <div className="flex gap-4">
-              <p className="font-medium">Email :</p>
-              <p>{userData.email}</p>
+              <p className="font-medium">Date Of Birth :</p>
+              <p>{userData.dateOfBirth}</p>
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Location :</p>
