@@ -5,7 +5,11 @@ import { setCookie } from '@/src/utils/cookie'
 import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
 import { isAuthenticatedJwt } from '@/src/utils/jwt'
 import { useAppDispatch } from '@/src/redux/hooks'
-import { UserInfo, setIsAuthenticated } from '@/src/redux/slices/authSlice'
+import {
+  UserInfo,
+  setIsAuthenticated,
+  setUserInfo
+} from '@/src/redux/slices/authSlice'
 import Title from '../Title'
 import Button from '../Button'
 import { setLocalStorageItem } from '@/src/utils/local-storage'
@@ -16,7 +20,7 @@ interface LoginRes {
   expires_in?: number | any
   scope?: string | any
   token_type?: string | any
-  payload?: UserInfo
+  user?: UserInfo
 }
 
 interface Props {
@@ -63,12 +67,12 @@ const LoginModal: React.FC<Props> = props => {
             message.success(`Đăng nhập thành công`)
           }
         }
-
-        if (res?.payload) {
+        if (res?.user) {
           setLocalStorageItem(
             LOCAL_STORAGE_KEY.USER_INFO,
-            JSON.stringify(res.payload)
+            JSON.stringify(res.user)
           )
+          dispatch(setUserInfo(res?.user))
         }
       } catch (error) {
         console.log(error)
@@ -110,8 +114,9 @@ const LoginModal: React.FC<Props> = props => {
 
         setLocalStorageItem(
           LOCAL_STORAGE_KEY.USER_INFO,
-          JSON.stringify(userData)
+          JSON.stringify(userData.user)
         )
+        dispatch(setUserInfo(userData.user))
 
         window.removeEventListener('message', listener)
       }

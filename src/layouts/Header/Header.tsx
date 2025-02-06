@@ -7,8 +7,10 @@ import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
 import { isAuthenticatedJwt } from '@/src/utils/jwt'
 import { useAppDispatch, useAppSelector } from '@/src/redux/hooks'
 import {
+  clearUserInfo,
   getIsAuthenticated,
-  setIsAuthenticated
+  setIsAuthenticated,
+  setUserInfo
 } from '@/src/redux/slices/authSlice'
 import { Button, LoginModal, Title } from '@/src/components'
 import {
@@ -23,6 +25,7 @@ const Header: React.FC = () => {
   // store
   const dispatch = useAppDispatch()
   const isAuthenticated = useAppSelector(getIsAuthenticated)
+  const userInfo = useAppSelector(state => state.auth.userInfo)
 
   // useState
   const [isVisibleLoginModal, setIsVisibleLoginModal] = useState(false)
@@ -34,6 +37,8 @@ const Header: React.FC = () => {
 
   const handleLogout = () => {
     deleteCookie(COOKIE_KEY.TOKEN)
+    localStorage.clear()
+    dispatch(clearUserInfo())
     window.location.reload()
   }
 
@@ -45,6 +50,11 @@ const Header: React.FC = () => {
       dispatch(setIsAuthenticated(true))
     } else {
       dispatch(setIsAuthenticated(false))
+    }
+
+    const userInfo = localStorage.getItem(LOCAL_STORAGE_KEY.USER_INFO)
+    if (userInfo) {
+      dispatch(setUserInfo(JSON.parse(userInfo)))
     }
   }, [dispatch])
 
@@ -164,12 +174,31 @@ const Header: React.FC = () => {
               <Row className="cursor-default" align={'middle'}>
                 <Col className="mr-2">
                   <Row align={'middle'} className="h-full">
-                    <Title isNormal level={5} text={'Hoang Tuan'} />
+                    <Title
+                      isNormal
+                      level={5}
+                      text={
+                        userInfo
+                          ? `${userInfo.firstName} ${userInfo.lastName}`
+                          : 'Người dùng'
+                      }
+                    />
                   </Row>
                 </Col>
-
                 <Col>
-                  <Avatar size={'default'} icon={<UserOutlined />} />
+                  <Avatar
+                    size={'default'}
+                    icon={
+                      userInfo ? (
+                        <img
+                          src={userInfo?.photoUrl}
+                          className="h-[30px] w-[30px] rounded-full"
+                        />
+                      ) : (
+                        <UserOutlined />
+                      )
+                    }
+                  />
                 </Col>
               </Row>
             </Tooltip>

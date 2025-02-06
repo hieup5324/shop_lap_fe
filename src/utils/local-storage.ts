@@ -8,7 +8,7 @@ export const getLocalStorageItem = (key: string): string | null =>
   localStorage.getItem(`${LOCAL_STORAGE_KEY.PREFIX}-${key}`)
 
 export const setLocalStorageItem = (key: string, value: string) =>
-  localStorage.setItem(`${LOCAL_STORAGE_KEY.PREFIX}-${key}`, value)
+  localStorage.setItem(`${key}`, value)
 
 export const removeLocalStorageItem = (key: string) =>
   localStorage.removeItem(`${LOCAL_STORAGE_KEY.PREFIX}-${key}`)
