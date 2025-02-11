@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import mainAxios from '@/src/libs/main-axios'
 import { Button, Title } from '@/src/components'
-import { Col, Input, Row, Spin, List } from 'antd'
+import { Col, Input, Row, Spin, List, Pagination } from 'antd'
 import LaptopItem from './LaptopItem'
 
 const HomeModule: React.FC = () => {
   const [laptops, setLaptops] = useState<any[]>([])
-  const [searchKey, setSearchKey] = useState<string>('')
   const [filteredLaptops, setFilteredLaptops] = useState<any[]>([])
+  const [searchKey, setSearchKey] = useState<string>('')
   const [isCallingApi, setIsCallingApi] = useState(false)
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
@@ -15,18 +15,16 @@ const HomeModule: React.FC = () => {
   )
   const [selectedCategory, setSelectedCategory] = useState<string>('')
 
+  const [page, setPage] = useState<number>(1)
+  const pageSize = 6
+  const [total, setTotal] = useState<number>(0)
+
   useEffect(() => {
     ;(async () => {
       try {
         const categoryRes: any = await mainAxios.get(
           'http://localhost:3001/categories'
         )
-        const productRes: any = await mainAxios.get(
-          'http://localhost:3001/products'
-        )
-
-        setLaptops(productRes)
-        setFilteredLaptops(productRes)
         setCategories(categoryRes)
       } catch (error) {
         console.log(error)
@@ -36,15 +34,24 @@ const HomeModule: React.FC = () => {
 
   useEffect(() => {
     fetchProducts()
-  }, [selectedCategory, searchKey])
+  }, [selectedCategory, searchKey, page])
 
   const fetchProducts = async () => {
     try {
       setIsCallingApi(true)
-      const res: any = await mainAxios.get(
-        `http://localhost:3004/products?category=${selectedCategory}&search=${searchKey}`
-      )
-      setFilteredLaptops(res)
+
+      let url = selectedCategory
+        ? `http://localhost:3001/categories/product?page=${page}&page_size=${pageSize}&category=${selectedCategory}`
+        : `http://localhost:3001/products?page=${page}&page_size=${pageSize}`
+
+      if (searchKey) {
+        url += `&product=${searchKey}`
+      }
+
+      const res: any = await mainAxios.get(url)
+
+      setFilteredLaptops(res.data)
+      setTotal(res.paging.total)
     } catch (error) {
       console.log(error)
     } finally {
@@ -65,13 +72,16 @@ const HomeModule: React.FC = () => {
           renderItem={category => (
             <List.Item
               className={`
-              ${
-                selectedCategory === category.name
-                  ? 'bg-blue-100 font-bold'
-                  : 'bg-white'
-              }
-            `}
-              onClick={() => setSelectedCategory(category.name)}
+                ${
+                  selectedCategory === category.id
+                    ? 'bg-blue-100 font-bold'
+                    : 'bg-white'
+                }
+              `}
+              onClick={() => {
+                setSelectedCategory(category.id)
+                setPage(1)
+              }}
             >
               <span className="mr-2 text-lg">•</span>
               {category.name}
@@ -110,7 +120,7 @@ const HomeModule: React.FC = () => {
                   type="primary"
                   className="h-full"
                   text="Tìm kiếm"
-                  onClick={fetchProducts}
+                  onClick={() => setPage(1)}
                 />
               </Col>
             </Row>
@@ -122,13 +132,25 @@ const HomeModule: React.FC = () => {
             <Spin />
           </Row>
         ) : (
-          <Row gutter={[24, 24]} justify="start" className="mt-6">
-            {filteredLaptops.map((item, index) => (
-              <Col span={8} key={index}>
-                <LaptopItem data={item} />
-              </Col>
-            ))}
-          </Row>
+          <>
+            <Row gutter={[24, 24]} justify="start" className="mt-6">
+              {filteredLaptops.map((item, index) => (
+                <Col span={8} key={index}>
+                  <LaptopItem data={item} />
+                </Col>
+              ))}
+            </Row>
+
+            <Row justify="center" className="mt-6">
+              <Pagination
+                current={page}
+                pageSize={pageSize}
+                total={total}
+                onChange={newPage => setPage(newPage)}
+                showSizeChanger={false}
+              />
+            </Row>
+          </>
         )}
       </Col>
     </Row>
