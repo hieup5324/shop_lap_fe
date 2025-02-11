@@ -118,7 +118,7 @@ const Header: React.FC = () => {
                       </Col>
 
                       <Col>
-                        <Title level={5} isNormal text={`Thông tin cơ bản`} />
+                        <Title level={5} isNormal text={`Thông tin cá nhân`} />
                       </Col>
                     </Row>
                   </Link>

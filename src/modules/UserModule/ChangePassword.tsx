@@ -17,7 +17,6 @@ const ChangePasswordPage = () => {
     const localUserInfo = getLocalStorageItem(LOCAL_STORAGE_KEY.USER_INFO)
       ? jsonParser(getLocalStorageItem(LOCAL_STORAGE_KEY.USER_INFO) as string)
       : null
-    console.log('localUserInfo:', localUserInfo)
     if (localUserInfo) {
       setUserInfo(localUserInfo)
     } else {
@@ -40,7 +39,7 @@ const ChangePasswordPage = () => {
 
     try {
       const changePassword = await mainAxios.post(
-        `http://localhost:3001/users/change-password/${userInfo.userId}`,
+        `http://localhost:3001/users/change-password/${userInfo.id}`,
         {
           oldPassword,
           newPassword

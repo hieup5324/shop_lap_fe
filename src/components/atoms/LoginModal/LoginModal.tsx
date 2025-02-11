@@ -50,11 +50,11 @@ const LoginModal: React.FC<Props> = props => {
         const res: LoginRes = await mainAxios.post(
           `http://localhost:3001/users/login`,
           {
-            username: email,
+            email,
             password
           }
         )
-        console.log('res:', res)
+
         if (res?.access_token) {
           const token = res.access_token
 
@@ -98,7 +98,6 @@ const LoginModal: React.FC<Props> = props => {
         if (event.origin !== 'http://localhost:3001') return
 
         const userData = event.data
-        console.log('userData:', userData)
         if (userData?.access_token) {
           const token = userData.access_token
 
