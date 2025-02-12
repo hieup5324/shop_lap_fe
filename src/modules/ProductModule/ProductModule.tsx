@@ -7,15 +7,8 @@ import Link from 'next/link'
 import PATH from '@/src/shared/path'
 import { useRouter } from 'next/router'
 import { useAppDispatch } from '@/src/redux/hooks'
-import { addProduct } from '@/src/redux/slices/cartSlice'
 import mainAxios from '@/src/libs/main-axios'
 import { formatPriceVND } from '@/src/utils/format-price'
-import {
-  getLocalStorageItem,
-  jsonParser,
-  setLocalStorageItem
-} from '@/src/utils/local-storage'
-import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
 
 const ProductModule: React.FC = () => {
   // useRouter
@@ -35,7 +28,7 @@ const ProductModule: React.FC = () => {
     ;(async () => {
       try {
         const res: any = await mainAxios.get(
-          `http://localhost:3004/products/${productId}`
+          `http://localhost:3001/products/${productId}`
         )
 
         setProduct(res)
@@ -46,64 +39,25 @@ const ProductModule: React.FC = () => {
   }, [productId])
 
   // functions
-  const onChangeQuantity = (e: any) => {
-    setAmount(Number(e.target.value))
+  const onChangeQuantity = (newAmount: number) => {
+    if (newAmount < 1) return
+    if (newAmount > (product?.quantity || 1)) return
+
+    setAmount(newAmount)
   }
 
-  const addingToCart = () => {
-    if (!product) return
-
-    const productsInCart = getLocalStorageItem(
-      LOCAL_STORAGE_KEY.PRODUCTS_IN_CART
-    )
-      ? jsonParser(
-          getLocalStorageItem(LOCAL_STORAGE_KEY.PRODUCTS_IN_CART) as string
-        )
-      : []
-
-    const newProduct = {
-      productId,
-      amount,
-      productName: product.productName,
-      type: product.type,
-      price: product.price,
-      description: product.description
-    }
-
-    const newProductsInCart = [...productsInCart, newProduct]
-
-    setLocalStorageItem(
-      LOCAL_STORAGE_KEY.PRODUCTS_IN_CART,
-      JSON.stringify(newProductsInCart)
-    )
-
-    // dispatch(
-    //   addProduct({
-    //     productId,
-    //     amount,
-    //     productName: product.productName,
-    //     type: product.type,
-    //     price: product.price,
-    //     description: product.description
-    //   })
-    // )
-
-    message.success('Thêm vào giỏ hàng thành công')
-  }
+  const addingToCart = () => {}
 
   return (
     <div className="rounded bg-white p-4">
       <div className="border-b border-solid border-gray-400 pb-4">
-        <Title
-          level={3}
-          text={`[Mới 100%] Dell Gaming G15 5525 (Ryzen 5-6600H, 8GB, 512GB, RTX 3050 4GB, 15.6'' FHD 120Hz)`}
-        />
+        <Title level={3} text={product?.description} />
       </div>
 
       <Row gutter={24} className="mt-6">
         <Col span={6}>
           <img
-            src={product?.photoUrl}
+            src={product?.photo_url}
             alt="laptop"
             className="h-[200px] w-full object-contain"
           />
@@ -123,11 +77,7 @@ const ProductModule: React.FC = () => {
             </Col>
 
             <Col className="ml-1">
-              <Title
-                level={5}
-                className="font-normal"
-                text={`12 tháng`}
-              />
+              <Title level={5} className="font-normal" text={`12 tháng`} />
             </Col>
           </Row>
 
@@ -151,12 +101,35 @@ const ProductModule: React.FC = () => {
             </Col>
 
             <Col>
-              <Input
-                value={amount}
-                onChange={onChangeQuantity}
-                size="small"
-                className="min-w-fit max-w-[60px] px-4 py-1"
-              />
+              <Row
+                align="middle"
+                className="overflow-hidden rounded-lg border border-gray-300"
+              >
+                <Button
+                  type="default"
+                  text="-"
+                  onClick={() => onChangeQuantity(amount - 1)}
+                  disabled={amount <= 1}
+                  className="bg-white  py-1 transition-all hover:bg-gray-200"
+                />
+
+                <Input
+                  value={amount}
+                  onChange={e => {
+                    const value = Number(e.target.value)
+                    if (!isNaN(value)) onChangeQuantity(value)
+                  }}
+                  className="w-[60px] border-0  text-center focus:ring-0"
+                />
+
+                <Button
+                  type="default"
+                  text="+"
+                  onClick={() => onChangeQuantity(amount + 1)}
+                  disabled={amount >= (product?.quantity || 1)}
+                  className="bg-white  py-1 transition-all hover:bg-gray-200"
+                />
+              </Row>
             </Col>
           </Row>
 

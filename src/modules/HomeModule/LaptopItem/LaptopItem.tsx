@@ -13,10 +13,10 @@ const LaptopItem: React.FC<Props> = props => {
   const { data } = props
 
   return (
-    <Link href={`/product/${data?.productId}`} className="block h-full">
+    <Link href={`/product/${data?.id}`} className="block h-full">
       <div className="group h-full w-full overflow-hidden rounded-2xl bg-white p-6 shadow-xl">
         <img
-          src={data?.photoUrl}
+          src={data?.photo_url}
           alt="laptop"
           className="h-[200px] w-full object-contain transition delay-150 ease-in-out group-hover:scale-125"
         />
@@ -24,7 +24,7 @@ const LaptopItem: React.FC<Props> = props => {
         <div className="h-[calc(100%-112px)] w-full">
           <Row align={'bottom'} justify={'space-between'}>
             <Col>
-              <Title level={3} text={data?.productName} />
+              <Title level={3} text={data?.product_name} />
             </Col>
 
             <Col>
