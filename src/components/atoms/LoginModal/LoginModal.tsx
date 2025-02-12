@@ -44,40 +44,41 @@ const LoginModal: React.FC<Props> = props => {
     setVisible(false)
   }
 
-  const handleLogin = () => {
-    ;(async () => {
-      try {
-        const res: LoginRes = await mainAxios.post(
-          `http://localhost:3001/users/login`,
-          {
-            email,
-            password
-          }
-        )
+  const handleLogin = async () => {
+    try {
+      const res: LoginRes = await mainAxios.post(
+        `http://localhost:3001/users/login`,
+        { email, password }
+      )
 
-        if (res?.access_token) {
-          const token = res.access_token
+      if (res?.access_token) {
+        const token = res.access_token
+        setCookie(COOKIE_KEY.TOKEN, token, 365)
 
-          setCookie(COOKIE_KEY.TOKEN, token, 365)
-
-          if (isAuthenticatedJwt(token)) {
-            dispatch(setIsAuthenticated(true))
-            setVisible(false)
-
-            message.success(`Đăng nhập thành công`)
-          }
+        if (isAuthenticatedJwt(token)) {
+          dispatch(setIsAuthenticated(true))
+          setVisible(false)
+          message.success(`Đăng nhập thành công`)
         }
-        if (res?.user) {
-          setLocalStorageItem(
-            LOCAL_STORAGE_KEY.USER_INFO,
-            JSON.stringify(res.user)
-          )
-          dispatch(setUserInfo(res?.user))
-        }
-      } catch (error) {
-        console.log(error)
+      } else {
+        throw new Error('Không nhận được access_token từ server.')
       }
-    })()
+
+      if (res?.user) {
+        setLocalStorageItem(
+          LOCAL_STORAGE_KEY.USER_INFO,
+          JSON.stringify(res.user)
+        )
+        dispatch(setUserInfo(res.user))
+      } else {
+        throw new Error('Không nhận được thông tin người dùng.')
+      }
+    } catch (error: any) {
+      console.error('Lỗi đăng nhập:', error)
+      message.error(
+        error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại!'
+      )
+    }
   }
 
   const loginGoogleHandler = async () => {

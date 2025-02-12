@@ -26,13 +26,13 @@ const UserInformation = () => {
       <div className="mx-auto -mt-20 w-[95%] rounded-2xl bg-[#ffff] px-6 py-4">
         <div className="flex items-center gap-4">
           <img
-            src={userData.photoUrl || '/images/avatar.jpg'}
+            src={userData.photo_url || '/images/avatar.jpg'}
             className="h-[74px] w-[74px] rounded-full"
           />
 
           <div>
             <p className="text-[20px] font-semibold">
-              {userData.firstName + ' ' + userData.lastName}
+              {userData.first_name + ' ' + userData.last_name}
             </p>
           </div>
         </div>
@@ -45,7 +45,7 @@ const UserInformation = () => {
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Full Name :</p>
-              {userData.firstName + ' ' + userData.lastName}
+              {userData.first_name + ' ' + userData.last_name}
               <p></p>
             </div>
             <div className="flex gap-4">
@@ -54,7 +54,7 @@ const UserInformation = () => {
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Date Of Birth :</p>
-              <p>{userData.dateOfBirth}</p>
+              <p>{userData.date_of_birth}</p>
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Location :</p>

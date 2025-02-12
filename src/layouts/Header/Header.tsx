@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons'
 import Link from 'next/link'
 import COOKIE_KEY from '@/src/shared/cookie-key'
+import RegisterModal from '@/src/components/atoms/RegisterModal/RegisterModal'
 
 const Header: React.FC = () => {
   // store
@@ -29,12 +30,15 @@ const Header: React.FC = () => {
 
   // useState
   const [isVisibleLoginModal, setIsVisibleLoginModal] = useState(false)
+  const [isVisibleRegisterModal, setIsVisibleRegisterModal] = useState(false)
 
   // functions
   const showLoginModal = () => {
     setIsVisibleLoginModal(true)
   }
-
+  const showRegisterModal = () => {
+    setIsVisibleRegisterModal(true)
+  }
   const handleLogout = () => {
     deleteCookie(COOKIE_KEY.TOKEN)
     localStorage.clear()
@@ -88,7 +92,7 @@ const Header: React.FC = () => {
               </Col>
 
               <Col>
-                <Button text="Đăng ký" />
+                <Button text="Đăng ký" onClick={showRegisterModal} />
               </Col>
             </Row>
           </Col>
@@ -177,7 +181,7 @@ const Header: React.FC = () => {
                       level={5}
                       text={
                         userInfo
-                          ? `${userInfo.firstName} ${userInfo.lastName}`
+                          ? `${userInfo.first_name} ${userInfo.last_name}`
                           : 'Người dùng'
                       }
                     />
@@ -189,7 +193,7 @@ const Header: React.FC = () => {
                     icon={
                       userInfo ? (
                         <img
-                          src={userInfo?.photoUrl}
+                          src={userInfo?.photo_url}
                           className="h-[30px] w-[30px] rounded-full"
                         />
                       ) : (
@@ -210,6 +214,12 @@ const Header: React.FC = () => {
           <LoginModal
             visible={isVisibleLoginModal}
             setVisible={setIsVisibleLoginModal}
+          />
+        )}
+        {isVisibleRegisterModal && (
+          <RegisterModal
+            visible={isVisibleRegisterModal}
+            setVisible={setIsVisibleRegisterModal}
           />
         )}
       </>

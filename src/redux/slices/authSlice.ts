@@ -4,9 +4,9 @@ import { RootState } from '../store'
 export interface UserInfo {
   id: string
   email: string
-  firstName: string
-  lastName: string
-  photoUrl: string
+  first_name: string
+  last_name: string
+  photo_url: string
   userType: 'sysadmin' | 'general'
 }
 

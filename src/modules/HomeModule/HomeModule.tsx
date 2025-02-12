@@ -45,7 +45,7 @@ const HomeModule: React.FC = () => {
         : `http://localhost:3001/products?page=${page}&page_size=${pageSize}`
 
       if (searchKey) {
-        url += `&product=${searchKey}`
+        url += `&search=${searchKey}`
       }
 
       const res: any = await mainAxios.get(url)
