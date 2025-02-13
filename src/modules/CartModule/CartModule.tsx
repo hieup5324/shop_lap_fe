@@ -1,272 +1,157 @@
 import { Button, Title } from '@/src/components'
 import mainAxios from '@/src/libs/main-axios'
-import { useAppSelector } from '@/src/redux/hooks'
-import { UserInfo } from '@/src/redux/slices/authSlice'
-import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
 import PATH from '@/src/shared/path'
 import { formatPriceVND } from '@/src/utils/format-price'
-import {
-  getLocalStorageItem,
-  jsonParser,
-  setLocalStorageItem
-} from '@/src/utils/local-storage'
-import { Col, Row, Select, Spin, Table, message } from 'antd'
+import { Col, Row, Spin, Table, message, InputNumber } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 
 interface DataType {
+  id: number
   name: string
-  unitPrice: string
   quantity: number
   total: number
 }
 
-const ProductModule: React.FC = () => {
-  // useRouter
+const CartModule: React.FC = () => {
   const router = useRouter()
 
-  // store
-  // const productsInCart = useAppSelector(state => state.cart.productsInCard)
-
-  // useState
-  const [delivery, setDelivery] = useState<number>(0)
-  const [provinces, setProvinces] = useState()
-  const [districts, setDistricts] = useState()
-  const [wards, setWards] = useState()
-  const [provinceId, setProvinceId] = useState<number>()
-  const [districtId, setDistrictId] = useState<number>()
-  const [wardCode, setWardCode] = useState<string>()
-  const [records, setRecords] = useState<DataType[]>()
-  const [totalCost, setTotalCost] = useState<number>()
-  const [userInfo, setUserInfo] = useState<UserInfo>()
+  // State
+  const [records, setRecords] = useState<DataType[]>([])
+  const [totalCost, setTotalCost] = useState<number>(0)
   const [productsInCart, setProductsInCart] = useState<any[]>([])
   const [isCallingApi, setIsCallingApi] = useState(false)
 
-  // useEffect
   useEffect(() => {
-    const localProductsInCart = getLocalStorageItem(
-      LOCAL_STORAGE_KEY.PRODUCTS_IN_CART
+    const fetchCartItems = async () => {
+      try {
+        setIsCallingApi(true)
+        const response: any = await mainAxios.get('http://localhost:3001/cart')
+
+        if (response?.items) {
+          setProductsInCart(response.items)
+        } else {
+          setProductsInCart([])
+        }
+      } catch (error) {
+        console.error('❌ Lỗi khi lấy giỏ hàng:', error)
+        message.error('Không thể tải giỏ hàng!')
+        setProductsInCart([])
+      } finally {
+        setIsCallingApi(false)
+      }
+    }
+
+    fetchCartItems()
+  }, [])
+
+  useEffect(() => {
+    if (!Array.isArray(productsInCart) || productsInCart.length === 0) {
+      setRecords([])
+      setTotalCost(0)
+      return
+    }
+
+    const mappedRecords: DataType[] = productsInCart.map(
+      (item: any, index: number) => ({
+        id: item.productId,
+        key: index + 1, // ✅ STT
+        name: item.productName,
+        quantity: item.quantity,
+        total: item.price * item.quantity
+      })
     )
-      ? jsonParser(
-          getLocalStorageItem(LOCAL_STORAGE_KEY.PRODUCTS_IN_CART) as string
-        )
-      : []
-
-    setProductsInCart(localProductsInCart)
-  }, [])
-
-  useEffect(() => {
-    const localUserInfo = getLocalStorageItem(LOCAL_STORAGE_KEY.USER_INFO)
-      ? jsonParser(getLocalStorageItem(LOCAL_STORAGE_KEY.USER_INFO) as string)
-      : {}
-
-    setUserInfo(localUserInfo)
-  }, [])
-
-  useEffect(() => {
-    if (!productsInCart) return
-
-    const mappedRecords: DataType[] = productsInCart.map((item: any) => ({
-      id: item.productId,
-      name: item.productName,
-      unitPrice: item.price,
-      quantity: item.amount,
-      total: item.price * item.amount
-    }))
 
     setRecords(mappedRecords)
+
+    const total = productsInCart.reduce(
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+      0
+    )
+
+    setTotalCost(total)
   }, [productsInCart])
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const res: any = await mainAxios.get(
-          `http://localhost:3004/delivery/provinces`
-        )
+  const handleDeleteItem = async (record: DataType) => {
+    try {
+      await mainAxios.delete(`http://localhost:3001/cart/${record.id}`)
 
-        const mappedProvines = res.map((item: any, index: number) => ({
-          value: item.ProvinceID,
-          label: item.ProvinceName
-        }))
+      const updatedCart = productsInCart.filter(
+        item => item.productId !== record.id
+      )
+      setProductsInCart(updatedCart)
 
-        setProvinces(mappedProvines)
-      } catch (error) {
-        console.log(error)
-      }
-    })()
-  }, [])
-
-  useEffect(() => {
-    if (!provinceId) return
-    ;(async () => {
-      try {
-        const res: any = await mainAxios.get(
-          `http://localhost:3004/delivery/districts/${provinceId}`
-        )
-
-        const mappedDistricts = res.map((item: any, index: number) => ({
-          value: item.DistrictID,
-          label: item.DistrictName
-        }))
-
-        setDistricts(mappedDistricts)
-      } catch (error) {
-        console.log(error)
-      }
-    })()
-  }, [provinceId])
-
-  useEffect(() => {
-    if (!districtId || !provinceId) return
-    ;(async () => {
-      try {
-        const res: any = await mainAxios.get(
-          `http://localhost:3004/delivery/wards/${districtId}`
-        )
-
-        const mappedWards = res.map((item: any, index: number) => ({
-          value: item.WardCode,
-          label: item.WardName
-        }))
-
-        setWards(mappedWards)
-      } catch (error) {
-        console.log(error)
-      }
-    })()
-  }, [districtId, provinceId])
-
-  useEffect(() => {
-    let currentTotalCost = 0
-
-    productsInCart.map((item: any) => {
-      currentTotalCost += item?.amount * item?.price
-    })
-
-    if (delivery) {
-      currentTotalCost += delivery
+      message.success('Xóa sản phẩm khỏi giỏ hàng thành công!')
+    } catch (error) {
+      console.error('Lỗi khi xóa sản phẩm:', error)
+      message.error('Không thể xóa sản phẩm!')
     }
-
-    if (currentTotalCost) {
-      setTotalCost(currentTotalCost)
-    }
-  }, [delivery, productsInCart])
-
-  // functions
-  const handleDeleteItem = (record: any) => {
-    const filteredProductsInCart = productsInCart.filter(
-      (item: any) => item.productId != record.id
-    )
-
-    console.log(filteredProductsInCart)
-
-    setProductsInCart(filteredProductsInCart)
-
-    setLocalStorageItem(
-      LOCAL_STORAGE_KEY.PRODUCTS_IN_CART,
-      JSON.stringify(filteredProductsInCart)
-    )
   }
 
-  const onChangeProvice = (value: number) => {
-    setProvinceId(value)
-    setDistrictId(undefined)
-    setWardCode(undefined)
-  }
-
-  const onChangeDistrist = (value: number) => {
-    setDistrictId(value)
-    setWardCode(undefined)
-  }
-
-  const onChangeWard = (value: string) => {
-    setWardCode(value)
-  }
-
-  const addingOrderHandler = async () => {
-    if (
-      !userInfo?.userId ||
-      !wardCode ||
-      !districtId ||
-      productsInCart?.length < 1
-    )
+  const handleUpdateQuantity = async (
+    productId: number,
+    newQuantity: number
+  ) => {
+    if (newQuantity < 1) {
+      message.warning('Số lượng phải lớn hơn 0!')
       return
+    }
 
     try {
-      setIsCallingApi(true)
+      await mainAxios.patch('http://localhost:3001/cart', {
+        productId,
+        quantity: newQuantity
+      })
 
-      const payload = {
-        addressId: districtId,
-        wardCode,
-        note: null,
-        productsInCard: productsInCart
-      }
-
-      await mainAxios.post(
-        `http://localhost:3004/carts?userId=${userInfo?.userId}`,
-        payload
+      const updatedCart = productsInCart.map(item =>
+        item.productId === productId ? { ...item, quantity: newQuantity } : item
       )
+      setProductsInCart(updatedCart)
 
-      message.success(`Đặt hàng thành công`)
-
-      setLocalStorageItem(
-        LOCAL_STORAGE_KEY.PRODUCTS_IN_CART,
-        JSON.stringify([])
-      )
-
-      setTimeout(() => {
-        router.push(PATH.ORDERS)
-      }, 2000)
+      message.success('Cập nhật số lượng thành công!')
     } catch (error) {
-      console.log(error)
-    } finally {
-      setIsCallingApi(false)
+      console.error('Lỗi khi cập nhật số lượng:', error)
+      message.error('Không thể cập nhật số lượng!')
     }
   }
 
-  const costCalculationHandler = async () => {
-    if (!districtId || !wardCode) return
-
-    try {
-      setIsCallingApi(true)
-
-      const payload = {
-        districtId,
-        wardCode
-      }
-
-      const res: any = await mainAxios.post(
-        `http://localhost:3004/delivery`,
-        payload
-      )
-
-      setDelivery(res?.fee || 0)
-    } catch (error) {
-      console.log(error)
-    } finally {
-      setIsCallingApi(false)
-    }
-  }
-
-  // columns of table
   const columns: ColumnsType<DataType> = [
+    {
+      title: 'STT',
+      dataIndex: 'key',
+      render: (_, record, index) => <Title level={5} text={`${index + 1}`} />
+    },
     {
       title: 'Tên sản phẩm',
       dataIndex: 'name',
       render: (_, record) => <Title level={5} text={record.name} />
     },
     {
-      title: 'Đơn giá',
-      dataIndex: 'unitPrice',
-      render: (_, record) => (
-        <Title level={5} text={`${formatPriceVND(record.unitPrice)} VNĐ`} />
-      )
-    },
-    {
       title: 'Số lượng',
       dataIndex: 'quantity',
-      render: (_, record) => <Title level={5} text={record.quantity} />
+      align: 'center',
+      render: (_, record) => (
+        <Row align="middle" justify="center" className="flex items-center">
+          <Button
+            text="-"
+            type="default"
+            onClick={() => handleUpdateQuantity(record.id, record.quantity - 1)}
+            disabled={record.quantity <= 1}
+            className="mr-2"
+          />
+          <div className="w-[40px] text-center text-lg font-semibold">
+            {record.quantity}
+          </div>
+          <Button
+            text="+"
+            type="default"
+            onClick={() => handleUpdateQuantity(record.id, record.quantity + 1)}
+            className="ml-2"
+          />
+        </Row>
+      )
     },
     {
       title: 'Thành tiền',
@@ -281,142 +166,53 @@ const ProductModule: React.FC = () => {
     },
     {
       title: 'Thao tác',
+      align: 'center', // ✅ Căn giữa nội dung
       render: (_, record) => (
         <div
           onClick={() => handleDeleteItem(record)}
-          className="cursor-pointer hover:[&>*]:text-blue-500"
+          className="flex cursor-pointer items-center justify-center transition-all hover:text-red-500"
         >
-          <Title text={'Xóa'} level={5} isNormal />
+          <Trash2 size={20} className="mr-2 text-gray-600 hover:text-red-500" />
+          <span className="font-medium text-gray-600 hover:text-red-500">
+            Xóa
+          </span>
         </div>
       )
     }
   ]
 
   return (
-    <div>
-      <Table columns={columns} dataSource={records} pagination={false} />
+    <div className="rounded-lg bg-white p-6">
+      <Title level={3} text="Giỏ hàng của bạn" className="mb-4" />
 
-      <Row className="mt-6" align={'middle'} gutter={50}>
-        <Col>
-          <Row gutter={16} align={'middle'}>
-            <Col>
-              <Title level={5} isNormal text={'Chọn tỉnh'} />
-            </Col>
-
-            <Col>
-              <Select
-                showSearch
-                placeholder="Sơn La"
-                optionFilterProp="children"
-                onChange={onChangeProvice}
-                className="min-w-[150px]"
-                options={provinces}
-              />
-            </Col>
-          </Row>
-        </Col>
-
-        <Col>
-          <Row gutter={24} align={'middle'}>
-            <Col>
-              <Title level={5} isNormal text={'Chọn huyện'} />
-            </Col>
-
-            <Col>
-              <Select
-                placeholder="Mai Sơn"
-                optionFilterProp="children"
-                onChange={onChangeDistrist}
-                className="min-w-[150px]"
-                options={districts}
-              />
-            </Col>
-          </Row>
-        </Col>
-
-        <Col>
-          <Row gutter={24} align={'middle'}>
-            <Col>
-              <Title level={5} isNormal text={'Chọn xã'} />
-            </Col>
-
-            <Col>
-              <Select
-                showSearch
-                placeholder="Bình Minh"
-                optionFilterProp="children"
-                onChange={onChangeWard}
-                className="min-w-[150px]"
-                options={wards}
-              />
-            </Col>
-          </Row>
-        </Col>
-
-        <Col>
-          <Button
-            type="primary"
-            text="Tính phí vận chuyển"
-            onClick={costCalculationHandler}
-          />
-        </Col>
-      </Row>
-
-      {(delivery && totalCost && (
-        <Row justify={'space-between'} className="mt-10">
-          <Col>
-            <Title
-              level={4}
-              text={`Phí vận chuyển: ${formatPriceVND(delivery)} VNĐ`}
-            />
-          </Col>
-
-          <Col>
-            <Row gutter={24} align={'middle'} justify={'end'}>
-              <Col>
-                <Row align={'middle'} gutter={16}>
-                  <Col>
-                    <Title
-                      level={4}
-                      isNormal
-                      text={`Tổng thanh toán (${productsInCart.length} sản phẩm):`}
-                    />
-                  </Col>
-
-                  <Col>
-                    <Title
-                      className="text-primary"
-                      level={3}
-                      isNormal
-                      text={`${formatPriceVND(totalCost)} VNĐ`}
-                    />
-                  </Col>
-                </Row>
-              </Col>
-
-              <Col>
-                <Button
-                  onClick={addingOrderHandler}
-                  size="large"
-                  type="primary"
-                  text="Đặt hàng"
-                  className="min-w-[200px]"
-                />
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      )) ||
-        null}
-
-      {(isCallingApi && (
-        <Row justify={'center'} className="mt-10">
+      {isCallingApi ? (
+        <Row justify="center" className="mt-6">
           <Spin />
         </Row>
-      )) ||
-        null}
+      ) : productsInCart && productsInCart.length > 0 ? (
+        <>
+          <Table
+            columns={columns}
+            dataSource={records || []}
+            pagination={false}
+          />
+
+          <Row justify="end" className="mt-6">
+            <Title
+              level={4}
+              text={`Tổng tiền: ${formatPriceVND(totalCost)} VNĐ`}
+            />
+          </Row>
+        </>
+      ) : (
+        <Title
+          level={4}
+          text="Giỏ hàng của bạn đang trống!"
+          className="text-center"
+        />
+      )}
     </div>
   )
 }
 
-export default ProductModule
+export default CartModule

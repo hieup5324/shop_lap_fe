@@ -47,7 +47,7 @@ const LoginModal: React.FC<Props> = props => {
   const handleLogin = async () => {
     try {
       const res: LoginRes = await mainAxios.post(
-        `http://localhost:3001/users/login`,
+        `http://localhost:3001/auth/login`,
         { email, password }
       )
 

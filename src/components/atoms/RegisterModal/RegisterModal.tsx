@@ -34,7 +34,7 @@ const RegisterModal: React.FC<Props> = ({ visible = false, setVisible }) => {
 
   const handleRegister = async () => {
     try {
-      const res: any = await mainAxios.post(`http://localhost:3001/users`, {
+      const res: any = await mainAxios.post(`http://localhost:3001/auth`, {
         first_name: firstName,
         last_name: lastName,
         email,

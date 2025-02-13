@@ -46,7 +46,19 @@ const ProductModule: React.FC = () => {
     setAmount(newAmount)
   }
 
-  const addingToCart = () => {}
+  const addingToCart = async () => {
+    try {
+      const res = await mainAxios.post(`http://localhost:3001/cart`, {
+        product_id: product?.id,
+        quantity: amount
+      })
+
+      message.success('Đã thêm sản phẩm vào giỏ hàng')
+    } catch (error) {
+      console.error('Lỗi khi thêm vào giỏ hàng:', error)
+      message.error('Đã xảy ra lỗi, vui lòng thử lại!')
+    }
+  }
 
   return (
     <div className="rounded bg-white p-4">
