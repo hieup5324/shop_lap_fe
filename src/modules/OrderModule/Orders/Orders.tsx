@@ -1,216 +1,186 @@
 import { Button, Title } from '@/src/components'
 import mainAxios from '@/src/libs/main-axios'
-import { useAppSelector } from '@/src/redux/hooks'
-import { UserInfo } from '@/src/redux/slices/authSlice'
-import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
-import PATH from '@/src/shared/path'
 import { formatPriceVND } from '@/src/utils/format-price'
 import {
-  getLocalStorageItem,
-  jsonParser,
-  setLocalStorageItem
-} from '@/src/utils/local-storage'
-import { Col, Row, Table } from 'antd'
+  Col,
+  Row,
+  Spin,
+  Table,
+  Tag,
+  message,
+  Modal,
+  List,
+  Avatar,
+  Divider
+} from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 
-interface DataType {
-  id: string
-  deliveryFee: number
-  quantity: number
-  totalCost: number
-  isPaid: number
-  subTotal: number
+interface OrderType {
+  id: number
+  total_price: number
+  order_code: string
+  status: string
+  payment_type: string
+  createdAt: string
+  orderItems: {
+    product_name: string
+    total_price: number
+    quantity: number
+    price: number
+    photo_url: string // Thêm field ảnh sản phẩm
+  }[]
 }
 
-const Orders: React.FC = () => {
-  // useRouter
+const Order: React.FC = () => {
   const router = useRouter()
 
-  // useState
-  const [records, setRecords] = useState<DataType[]>()
-  const [orders, setOrders] = useState<any[]>()
-  const [userInfo, setUserInfo] = useState<UserInfo>()
+  // State
+  const [orders, setOrders] = useState<OrderType[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null)
+  const [isModalVisible, setIsModalVisible] = useState(false)
 
-  // useEffect
   useEffect(() => {
-    const localUserInfo = getLocalStorageItem(LOCAL_STORAGE_KEY.USER_INFO)
-      ? jsonParser(getLocalStorageItem(LOCAL_STORAGE_KEY.USER_INFO) as string)
-      : {}
+    const fetchOrders = async () => {
+      setLoading(true)
+      try {
+        const response: any = await mainAxios.get('http://localhost:3001/order')
+        console.log('Danh sách đơn hàng:', response)
+        setOrders(response || [])
+      } catch (error) {
+        console.error('Lỗi khi lấy đơn hàng:', error)
+        message.error('Không thể tải danh sách đơn hàng!')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    setUserInfo(localUserInfo)
+    fetchOrders()
   }, [])
 
-  useEffect(() => {
-    if (!userInfo?.userId) return
-    ;(async () => {
-      try {
-        const res: any = await mainAxios.get(
-          `http://localhost:3004/carts?userId=${userInfo.userId}`
-        )
-
-        setOrders(res)
-      } catch (error) {
-        console.log(error)
-      }
-    })()
-  }, [userInfo?.userId])
-
-  useEffect(() => {
-    if (!orders) return
-
-    const mappedRecords: DataType[] = orders.map((item: any) => {
-      let calculatedTotalCost = 0
-
-      item.productsInCard.map((product: any) => {
-        calculatedTotalCost += product.price * product.amount
-      })
-
-      if (item?.deliverFee?.fee) {
-        calculatedTotalCost += item?.deliverFee?.fee
-      }
-
-      return {
-        id: item.cartId,
-        deliveryFee: item.deliverFee.fee,
-        quantity: item.productsInCard.length,
-        totalCost: calculatedTotalCost,
-        isPaid: item.isPaid,
-        subTotal: calculatedTotalCost - item.deliverFee.fee
-      }
-    })
-
-    setRecords(mappedRecords)
-  }, [orders])
-
-  // functions
-  const handleDeleteItem = async (record: any) => {
-    if (!record?.id) return
-
-    try {
-      await mainAxios.delete(`http://localhost:3004/carts/${record.id}`)
-
-      router.reload()
-    } catch (error) {
-      console.log(error)
-    }
-    return null
+  const handleViewOrder = (order: OrderType) => {
+    setSelectedOrder(order)
+    setIsModalVisible(true) // Hiển thị popup
   }
 
-  const handlePayment = async (record: DataType) => {
-    try {
-      const payload = {
-        total: record.totalCost,
-        details: {
-          subtotal: record.subTotal,
-          tax: 0.0,
-          shipping: record.deliveryFee,
-          handling_fee: 0.0,
-          shipping_discount: 0.0,
-          insurance: 0.0
-        }
-      }
-
-      const res: any = await mainAxios.post(
-        `http://localhost:3001/users/payment-url`,
-        payload
-      )
-
-      setLocalStorageItem(
-        LOCAL_STORAGE_KEY.PAYING_CART_ID,
-        JSON.stringify(record.id)
-      )
-
-      if (res?.links?.[1]) {
-        setLocalStorageItem(
-          LOCAL_STORAGE_KEY.PAYMENT,
-          JSON.stringify(res.links)
-        )
-        router.replace(res?.links?.[1].href)
-      }
-    } catch (error) {
-      console.log(error)
-    }
+  const handleCloseModal = () => {
+    setIsModalVisible(false)
+    setSelectedOrder(null)
   }
 
-  // columns of table
-  const columns: ColumnsType<DataType> = [
+  const columns: ColumnsType<OrderType> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      render: (_, record) => (
-        <Link href={`${PATH.ORDERS}/${record?.id}` || `#`}>
-          <Title level={5} text={record.id} className="hover:text-primary" />
-        </Link>
-      )
+      title: 'STT',
+      dataIndex: 'key',
+      render: (_, record, index) => <Title level={5} text={`${index + 1}`} />
     },
     {
-      title: 'Phí vận chuyển',
-      dataIndex: 'deliveryFee',
-      render: (_, record) => (
-        <Title level={5} text={`${formatPriceVND(record.deliveryFee)} VNĐ`} />
-      )
-    },
-    {
-      title: 'Số lượng',
-      dataIndex: 'quantity',
-      render: (_, record) => <Title level={5} text={record.quantity} />
-    },
-    {
-      title: 'Tổng tiền',
-      dataIndex: 'totalCost',
+      title: 'Ngày đặt hàng',
+      dataIndex: 'createdAt',
       render: (_, record) => (
         <Title
           level={5}
-          className="text-primary"
-          text={`${formatPriceVND(record.totalCost)} VNĐ`}
+          text={new Date(record.createdAt).toLocaleDateString()}
         />
+      )
+    },
+    {
+      title: 'Mã đơn hàng',
+      dataIndex: 'order_code',
+      render: (_, record) => <Title level={5} text={`${record.order_code}`} />
+    },
+    {
+      title: 'Tổng tiền',
+      dataIndex: 'total_price',
+      render: (_, record) => (
+        <Title level={5} text={`${formatPriceVND(record.total_price)} VNĐ`} />
       )
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'isPaid',
-      render: (_, record) => (
-        <Title
-          level={5}
-          className={record.isPaid ? 'text-success' : 'text-primary'}
-          text={record.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
-        />
-      )
+      dataIndex: 'status',
+      render: (_, record) => {
+        const color = record.status === 'PENDING' ? 'orange' : 'green'
+        return <Tag color={color}>{record.status}</Tag>
+      }
+    },
+    {
+      title: 'Phương Thức Thanh toán',
+      dataIndex: 'payment_type',
+      render: (_, record) => <Title level={5} text={record.payment_type} />
     },
     {
       title: 'Thao tác',
       render: (_, record) => (
-        <>
-          {!record?.isPaid && (
-            <Row gutter={16}>
-              <Col
-                onClick={() => handlePayment(record)}
-                className="cursor-pointer"
-              >
-                <Button type="primary" text="Thanh toán" />
-              </Col>
-
-              <Col
-                onClick={() => handleDeleteItem(record)}
-                className="cursor-pointer"
-              >
-                <Button text="Hủy" />
-              </Col>
-            </Row>
-          )}
-        </>
+        <Button
+          type="default"
+          text="Xem chi tiết"
+          onClick={() => handleViewOrder(record)}
+        />
       )
     }
   ]
 
   return (
-    <div>
-      <Table columns={columns} dataSource={records} pagination={false} />
+    <div className="rounded-lg bg-white p-6">
+      <Title level={3} text="Danh sách đơn hàng" className="mb-4" />
+
+      {loading ? (
+        <Row justify="center" className="mt-6">
+          <Spin />
+        </Row>
+      ) : orders.length > 0 ? (
+        <Table columns={columns} dataSource={orders} pagination={false} />
+      ) : (
+        <Title
+          level={4}
+          text="Bạn chưa có đơn hàng nào!"
+          className="text-center"
+        />
+      )}
+
+      <Modal
+        title={`Chi tiết đơn hàng ${selectedOrder?.order_code}`}
+        open={isModalVisible}
+        onCancel={handleCloseModal}
+        footer={null}
+        width={700}
+      >
+        {selectedOrder && (
+          <List
+            itemLayout="vertical"
+            dataSource={selectedOrder.orderItems}
+            renderItem={(item, index) => (
+              <div className="mb-4 rounded-lg border bg-gray-50 p-4">
+                <Row align="middle" gutter={[16, 16]}>
+                  <Col span={6}>
+                    <Avatar
+                      src={item.photo_url}
+                      shape="square"
+                      size={100}
+                      className="rounded-lg shadow-lg"
+                    />
+                  </Col>
+                  <Col span={18}>
+                    <Title level={3} text={`${item.product_name}`} />
+                    <p className="text-lg font-semibold">
+                      Giá: {formatPriceVND(item.price)} VNĐ
+                    </p>
+                    <p className="text-lg">Số lượng: {item.quantity}</p>
+                    <p className="text-lg font-semibold text-red-500">
+                      Thành tiền: {formatPriceVND(item.total_price)} VNĐ
+                    </p>
+                  </Col>
+                </Row>
+              </div>
+            )}
+          />
+        )}
+      </Modal>
     </div>
   )
 }
 
-export default Orders
+export default Order

@@ -1,12 +1,10 @@
 import { Button, Title } from '@/src/components'
 import mainAxios from '@/src/libs/main-axios'
-import PATH from '@/src/shared/path'
 import { formatPriceVND } from '@/src/utils/format-price'
-import { Col, Row, Spin, Table, message, InputNumber } from 'antd'
+import { Col, Modal, Row, Spin, Table, Tag, message } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Eye } from 'lucide-react'
 
 interface DataType {
   id: number
@@ -16,13 +14,14 @@ interface DataType {
 }
 
 const CartModule: React.FC = () => {
-  const router = useRouter()
-
   // State
   const [records, setRecords] = useState<DataType[]>([])
   const [totalCost, setTotalCost] = useState<number>(0)
   const [productsInCart, setProductsInCart] = useState<any[]>([])
   const [isCallingApi, setIsCallingApi] = useState(false)
+  const [isOrdering, setIsOrdering] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -57,7 +56,7 @@ const CartModule: React.FC = () => {
     const mappedRecords: DataType[] = productsInCart.map(
       (item: any, index: number) => ({
         id: item.productId,
-        key: index + 1, // ✅ STT
+        key: index + 1,
         name: item.productName,
         quantity: item.quantity,
         total: item.price * item.quantity
@@ -117,6 +116,46 @@ const CartModule: React.FC = () => {
     }
   }
 
+  const handleOrder = async () => {
+    if (productsInCart.length === 0) {
+      message.warning('Giỏ hàng của bạn đang trống!')
+      return
+    }
+
+    setIsOrdering(true)
+
+    try {
+      await mainAxios.post('http://localhost:3001/order', {
+        payment_type: 'cash'
+      })
+
+      message.success('Đặt hàng thành công!')
+      setProductsInCart([])
+    } catch (error) {
+      console.error('Lỗi khi đặt hàng:', error)
+      message.error('Không thể đặt hàng!')
+    } finally {
+      setIsOrdering(false)
+    }
+  }
+
+  // ✅ Call API lấy thông tin sản phẩm và hiển thị modal
+  const handleViewProduct = async (productId: number) => {
+    try {
+      setIsCallingApi(true)
+      const response = await mainAxios.get(
+        `http://localhost:3001/products/${productId}`
+      )
+      setSelectedProduct(response)
+      setIsProductModalOpen(true)
+    } catch (error) {
+      console.error('Lỗi khi lấy thông tin sản phẩm:', error)
+      message.error('Không thể lấy thông tin sản phẩm!')
+    } finally {
+      setIsCallingApi(false)
+    }
+  }
+
   const columns: ColumnsType<DataType> = [
     {
       title: 'STT',
@@ -165,8 +204,19 @@ const CartModule: React.FC = () => {
       )
     },
     {
-      title: 'Thao tác',
-      align: 'center', // ✅ Căn giữa nội dung
+      title: 'Xem chi tiết',
+      align: 'center',
+      render: (_, record) => (
+        <Button
+          type="default"
+          text="Xem"
+          onClick={() => handleViewProduct(record.id)}
+        />
+      )
+    },
+    {
+      title: 'Xóa',
+      align: 'center',
       render: (_, record) => (
         <div
           onClick={() => handleDeleteItem(record)}
@@ -185,32 +235,43 @@ const CartModule: React.FC = () => {
     <div className="rounded-lg bg-white p-6">
       <Title level={3} text="Giỏ hàng của bạn" className="mb-4" />
 
-      {isCallingApi ? (
-        <Row justify="center" className="mt-6">
-          <Spin />
-        </Row>
-      ) : productsInCart && productsInCart.length > 0 ? (
-        <>
-          <Table
-            columns={columns}
-            dataSource={records || []}
-            pagination={false}
-          />
+      <Table columns={columns} dataSource={records || []} pagination={false} />
 
-          <Row justify="end" className="mt-6">
-            <Title
-              level={4}
-              text={`Tổng tiền: ${formatPriceVND(totalCost)} VNĐ`}
-            />
-          </Row>
-        </>
-      ) : (
-        <Title
-          level={4}
-          text="Giỏ hàng của bạn đang trống!"
-          className="text-center"
+      <Row justify="end" className="mt-6">
+        <Button
+          type="primary"
+          size="large"
+          text="Đặt hàng"
+          onClick={handleOrder}
         />
-      )}
+      </Row>
+
+      {/* ✅ Modal hiển thị chi tiết sản phẩm */}
+      <Modal
+        title="Thông tin sản phẩm"
+        open={isProductModalOpen}
+        onCancel={() => setIsProductModalOpen(false)}
+        footer={null}
+      >
+        {selectedProduct ? (
+          <div>
+            <img
+              src={selectedProduct.photo_url}
+              alt={selectedProduct.product_name}
+              className="mb-4 h-64 w-full rounded-lg object-cover"
+            />
+            <Title level={4} text={selectedProduct.product_name} />
+            <p className="text-gray-700">{selectedProduct.description}</p>
+            <Title
+              level={5}
+              className="mt-2 text-primary"
+              text={`Giá: ${formatPriceVND(selectedProduct.price)} VNĐ`}
+            />
+          </div>
+        ) : (
+          <Spin />
+        )}
+      </Modal>
     </div>
   )
 }
