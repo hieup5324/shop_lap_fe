@@ -1,10 +1,11 @@
 import { Button, Title } from '@/src/components'
 import mainAxios from '@/src/libs/main-axios'
 import { formatPriceVND } from '@/src/utils/format-price'
-import { Col, Modal, Row, Spin, Table, Tag, message } from 'antd'
+import { Col, Modal, Row, Select, Spin, Table, Tag, message } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { Trash2, Eye } from 'lucide-react'
+import { useRouter } from 'next/router'
 
 interface DataType {
   id: number
@@ -22,6 +23,9 @@ const CartModule: React.FC = () => {
   const [isOrdering, setIsOrdering] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [transId, setTransId] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -125,12 +129,22 @@ const CartModule: React.FC = () => {
     setIsOrdering(true)
 
     try {
-      await mainAxios.post('http://localhost:3001/order', {
-        payment_type: 'cash'
-      })
+      const response: any = await mainAxios.post(
+        'http://localhost:3001/order',
+        {
+          payment_type: paymentMethod
+        }
+      )
 
-      message.success('Đặt hàng thành công!')
-      setProductsInCart([])
+      setTransId(response.id)
+
+      if (paymentMethod === 'vnpay' && response?.vnpay_url) {
+        setProductsInCart([])
+        window.location.href = response?.vnpay_url
+      } else {
+        setProductsInCart([])
+        message.success('Đặt hàng thành công!')
+      }
     } catch (error) {
       console.error('Lỗi khi đặt hàng:', error)
       message.error('Không thể đặt hàng!')
@@ -139,7 +153,6 @@ const CartModule: React.FC = () => {
     }
   }
 
-  // ✅ Call API lấy thông tin sản phẩm và hiển thị modal
   const handleViewProduct = async (productId: number) => {
     try {
       setIsCallingApi(true)
@@ -237,13 +250,29 @@ const CartModule: React.FC = () => {
 
       <Table columns={columns} dataSource={records || []} pagination={false} />
 
-      <Row justify="end" className="mt-6">
-        <Button
-          type="primary"
-          size="large"
-          text="Đặt hàng"
-          onClick={handleOrder}
-        />
+      <Row justify="end" className="mt-5" gutter={10}>
+        <Col>
+          <Select
+            value={paymentMethod}
+            onChange={setPaymentMethod}
+            style={{ width: 200, marginTop: 4 }}
+            className="rounded-lg border border-gray-300 shadow-sm"
+            options={[
+              { label: 'Tiền mặt', value: 'cash' },
+              { label: 'VNPay', value: 'vnpay' },
+              { label: 'MoMo', value: 'momo' },
+              { label: 'ZaloPay', value: 'zalopay' }
+            ]}
+          />
+        </Col>
+        <Col>
+          <Button
+            type="primary"
+            size="large"
+            text="Đặt hàng"
+            onClick={handleOrder}
+          />
+        </Col>
       </Row>
 
       {/* ✅ Modal hiển thị chi tiết sản phẩm */}

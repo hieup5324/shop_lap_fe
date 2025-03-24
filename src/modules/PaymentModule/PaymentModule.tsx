@@ -1,111 +1,99 @@
-import { Button } from '@/src/components'
-import mainAxios from '@/src/libs/main-axios'
-import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
-import { getLocalStorageItem, jsonParser } from '@/src/utils/local-storage'
-import { Result, Spin, message } from 'antd'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { Card, Button, Spin } from 'antd'
+import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import mainAxios from '@/src/libs/main-axios'
+import { formatPriceVND } from '@/src/utils/format-price'
+import { PAYMENT_STATUS } from '@/src/constant/constant'
 
-const PaymentModule: React.FC = () => {
-  // useRouter
+const PaymentModule = () => {
   const router = useRouter()
-
-  // useState
-  const [links, setLinks] = useState<any>()
-  const [isPaid, setIsPaid] = useState(false)
-  const [payingCartId, setPayingCartId] = useState<string>()
-  const [isConfirming, setIsConfirming] = useState(false)
+  const { transactionId } = router.query
+  const [loading, setLoading] = useState(true)
+  const [transaction, setTransaction] = useState<any>(null)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    const linksHere = getLocalStorageItem(LOCAL_STORAGE_KEY.PAYMENT)
-      ? jsonParser(getLocalStorageItem(LOCAL_STORAGE_KEY.PAYMENT) as string)
-      : {}
+    if (transactionId) {
+      fetchTransaction(transactionId as string)
+    }
+  }, [transactionId])
 
-    setLinks(linksHere)
-  }, [])
-
-  useEffect(() => {
-    const localPayingCartId = getLocalStorageItem(
-      LOCAL_STORAGE_KEY.PAYING_CART_ID
-    )
-      ? jsonParser(
-          getLocalStorageItem(LOCAL_STORAGE_KEY.PAYING_CART_ID) as string
-        )
-      : {}
-
-    setPayingCartId(localPayingCartId)
-  }, [])
-
-  const handleConfirmPayment = async () => {
-    if (!router?.query?.PayerID || !links?.[2]?.href) return
-
+  const fetchTransaction = async (id: string) => {
     try {
-      setIsConfirming(true)
-
-      const payload = {
-        payId: router.query.PayerID,
-        url: links[2].href
-      }
-
-      await mainAxios.post(
-        `http://localhost:3001/users/execute-payment`,
-        payload
-      )
-
-      setIsPaid(true)
-
-      if (payingCartId) {
-        try {
-          await mainAxios.patch(
-            `http://localhost:3004/carts?cartId=${payingCartId}`
-          )
-
-          message.success('Thanh toán thành công')
-        } catch (error) {
-          console.log(error)
-        }
-      }
-
-      // send sms
-      await mainAxios.post(`http://localhost:3001/sms`, {
-        to: `+84919469733`,
-        message: `Your order has been paid successful`
-      })
-
+      const response = await mainAxios.get(`http://localhost:3001/vnpay/${id}`)
+      setTransaction(response)
     } catch (error) {
-      console.log(error)
+      console.error('Lỗi khi lấy thông tin giao dịch:', error)
+      setError(true)
     } finally {
-      setIsConfirming(false)
+      setLoading(false)
     }
   }
 
+  const handleGoHome = () => {
+    router.push('/')
+  }
+
   return (
-    <div>
-      {(isPaid && (
-        <Result
-          status="success"
-          title="Đã thanh toán thành công"
-          subTitle={`Payment Id: ${router?.query?.PayerID}`}
-        />
-      )) || (
-        <Result
-          status="success"
-          title="Bấm xác nhận để hoàn tất thanh toán"
-          subTitle={`Payment Id: ${router?.query?.PayerID}`}
-          extra={[
-            isConfirming ? (
-              <Spin />
-            ) : (
-              <Button
-                size="large"
-                type="success"
-                key="console"
-                text="Xác nhận"
-                onClick={handleConfirmPayment}
-              />
-            )
-          ]}
-        />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
+      {loading ? (
+        <Spin size="large" />
+      ) : (
+        <Card className="rounded-lg bg-white p-6 text-center shadow-lg">
+          {error || !transaction ? (
+            <>
+              <CloseCircleOutlined className="mb-4 text-6xl text-red-500" />
+              <h2 className="text-xl font-semibold">
+                Không tìm thấy giao dịch!
+              </h2>
+              <p className="text-gray-600">
+                Vui lòng thử lại hoặc liên hệ hỗ trợ.
+              </p>
+            </>
+          ) : (
+            <>
+              {transaction.transaction_status === PAYMENT_STATUS.SUCCESS ? (
+                <>
+                  <CheckCircleOutlined className="mb-4 text-6xl text-green-500" />
+                  <h2 className="text-xl font-semibold">
+                    Thanh toán thành công!
+                  </h2>
+                  <p className="text-gray-600">Cảm ơn bạn đã mua hàng.</p>
+                </>
+              ) : (
+                <>
+                  <CloseCircleOutlined className="mb-4 text-6xl text-red-500" />
+                  <h2 className="text-xl font-semibold">
+                    Thanh toán thất bại!
+                  </h2>
+                  <p className="text-gray-600">
+                    Vui lòng thử lại hoặc liên hệ hỗ trợ.
+                  </p>
+                </>
+              )}
+              <div className="mt-4 text-left">
+                <p>
+                  <strong>Mã đơn hàng:</strong> {transaction?.order?.order_code}
+                </p>
+                <p>
+                  <strong>Số tiền:</strong>{' '}
+                  {`${formatPriceVND(transaction.amount)} VNĐ`}
+                </p>
+                <p>
+                  <strong>Ngân hàng:</strong> {transaction.bank_code}
+                </p>
+                <p>
+                  <strong>Thời gian thanh toán: </strong>
+                  {new Date(transaction.pay_date).toLocaleDateString()}
+                </p>
+              </div>
+            </>
+          )}
+          <Button type="primary" className="mt-4" onClick={handleGoHome}>
+            Quay lại trang chủ
+          </Button>
+        </Card>
       )}
     </div>
   )

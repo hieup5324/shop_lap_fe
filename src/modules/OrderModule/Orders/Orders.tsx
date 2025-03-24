@@ -16,14 +16,26 @@ import {
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import {
+  getPaymentMethodLabel,
+  getStatusColor,
+  // PAYMENT_METHOD,
+  PAYMENT_STATUS
+} from '@/src/constant/constant'
+
+enum PaymentMethod {
+  vnpay = 'VNPAY',
+  cash = 'Tiền mặt'
+}
 
 interface OrderType {
   id: number
   total_price: number
   order_code: string
   status: string
-  payment_type: string
+  payment_type: PaymentMethod
   createdAt: string
+  status_payment: string
   orderItems: {
     product_name: string
     total_price: number
@@ -47,7 +59,6 @@ const Order: React.FC = () => {
       setLoading(true)
       try {
         const response: any = await mainAxios.get('http://localhost:3001/order')
-        console.log('Danh sách đơn hàng:', response)
         setOrders(response || [])
       } catch (error) {
         console.error('Lỗi khi lấy đơn hàng:', error)
@@ -99,17 +110,27 @@ const Order: React.FC = () => {
       )
     },
     {
-      title: 'Trạng thái',
+      title: 'Trạng thái đơn hàng',
       dataIndex: 'status',
       render: (_, record) => {
-        const color = record.status === 'PENDING' ? 'orange' : 'green'
+        const color = record.status === 'pending' ? 'orange' : 'green'
         return <Tag color={color}>{record.status}</Tag>
       }
     },
     {
       title: 'Phương Thức Thanh toán',
       dataIndex: 'payment_type',
-      render: (_, record) => <Title level={5} text={record.payment_type} />
+      render: (_, record) => (
+        <Title level={5} text={getPaymentMethodLabel(record.payment_type)} />
+      )
+    },
+    {
+      title: 'Trạng thái thanh toán',
+      dataIndex: 'status_payment',
+      render: (_, record) => {
+        const color = getStatusColor(record.status_payment)
+        return <Tag color={color}>{record.status_payment}</Tag>
+      }
     },
     {
       title: 'Thao tác',
