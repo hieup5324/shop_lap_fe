@@ -25,7 +25,7 @@ const HomeModule: React.FC = () => {
         const categoryRes: any = await mainAxios.get(
           'http://localhost:3001/categories'
         )
-        setCategories(categoryRes)
+        setCategories(categoryRes.data || [])
       } catch (error) {
         console.log(error)
       }
@@ -50,8 +50,8 @@ const HomeModule: React.FC = () => {
 
       const res: any = await mainAxios.get(url)
 
-      setFilteredLaptops(res.data)
-      setTotal(res.paging.total)
+      setFilteredLaptops(res.data || []) // Điều chỉnh để lấy dữ liệu đúng từ `res.data`
+      setTotal(res.paging.total || 0) // Cập nhật tổng số sản phẩm từ `res.paging.total`
     } catch (error) {
       console.log(error)
     } finally {
@@ -71,13 +71,11 @@ const HomeModule: React.FC = () => {
           dataSource={[{ id: '', name: 'Tất cả danh mục' }, ...categories]}
           renderItem={category => (
             <List.Item
-              className={`
-                ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-100 font-bold'
-                    : 'bg-white'
-                }
-              `}
+              className={`${
+                selectedCategory === category.id
+                  ? 'bg-blue-100 font-bold'
+                  : 'bg-white'
+              }`}
               onClick={() => {
                 setSelectedCategory(category.id)
                 setPage(1)
