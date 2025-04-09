@@ -161,7 +161,7 @@ const ProductModule: React.FC = () => {
               />
             </Col>
 
-            <Col span={12}>
+            {/* <Col span={12}>
               <Link href={PATH.CART}>
                 <Button
                   type="primary"
@@ -170,7 +170,7 @@ const ProductModule: React.FC = () => {
                   className="w-full"
                 />
               </Link>
-            </Col>
+            </Col> */}
           </Row>
         </Col>
 
