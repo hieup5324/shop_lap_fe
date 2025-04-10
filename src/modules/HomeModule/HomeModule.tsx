@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import mainAxios from '@/src/libs/main-axios'
 import { Button, Title } from '@/src/components'
-import { Col, Input, Row, Spin, List, Pagination } from 'antd'
+import { Col, Input, Row, Spin, List, Pagination, Select } from 'antd'
 import LaptopItem from './LaptopItem'
 
 const HomeModule: React.FC = () => {
@@ -9,6 +9,7 @@ const HomeModule: React.FC = () => {
   const [filteredLaptops, setFilteredLaptops] = useState<any[]>([])
   const [searchKey, setSearchKey] = useState<string>('')
   const [isCallingApi, setIsCallingApi] = useState(false)
+  const [priceSort, setPriceSort] = useState<string>('')
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
     []
@@ -34,24 +35,30 @@ const HomeModule: React.FC = () => {
 
   useEffect(() => {
     fetchProducts()
-  }, [selectedCategory, searchKey, page])
+  }, [selectedCategory, searchKey, page, priceSort])
 
   const fetchProducts = async () => {
     try {
       setIsCallingApi(true)
 
-      let url = selectedCategory
-        ? `http://localhost:3001/categories/product?page=${page}&page_size=${pageSize}&category=${selectedCategory}`
-        : `http://localhost:3001/products?page=${page}&page_size=${pageSize}`
+      let url = `http://localhost:3001/products?page=${page}&page_size=${pageSize}`
 
       if (searchKey) {
         url += `&search=${searchKey}`
       }
 
+      if (priceSort) {
+        url += `&price=${priceSort}`
+      }
+
+      if (selectedCategory) {
+        url += `&categoryId=${selectedCategory}`
+      }
+
       const res: any = await mainAxios.get(url)
 
-      setFilteredLaptops(res.data || []) // Điều chỉnh để lấy dữ liệu đúng từ `res.data`
-      setTotal(res.paging.total || 0) // Cập nhật tổng số sản phẩm từ `res.paging.total`
+      setFilteredLaptops(res.data || [])
+      setTotal(res.paging.total || 0)
     } catch (error) {
       console.log(error)
     } finally {
@@ -91,15 +98,28 @@ const HomeModule: React.FC = () => {
 
       <Col span={18}>
         <Row justify="space-between" align="middle" className="mb-4">
-          <Col>
-            <Title
-              level={4}
-              text={
-                filteredLaptops.length !== laptops.length
-                  ? 'Sản phẩm đã tìm kiếm'
-                  : 'Tất cả sản phẩm'
-              }
-            />
+          <Col span={6}>
+            <Row align="middle" gutter={8}>
+              <Col>
+                <Title level={5} text="Lọc theo giá:" className="mb-0" />
+              </Col>
+              <Col flex="auto">
+                <Select
+                  placeholder="Chọn cách sắp xếp"
+                  style={{ width: '100%' }}
+                  value={priceSort}
+                  onChange={value => {
+                    setPriceSort(value)
+                    setPage(1)
+                  }}
+                  options={[
+                    { label: 'Giá tăng dần', value: 'asc' },
+                    { label: 'Giá giảm dần', value: 'desc' },
+                    { label: 'Mặc định', value: '' }
+                  ]}
+                />
+              </Col>
+            </Row>
           </Col>
 
           <Col>

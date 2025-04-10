@@ -22,12 +22,14 @@ const LaptopItem: React.FC<Props> = props => {
         />
 
         <div className="h-[calc(100%-112px)] w-full">
-          <Row align={'bottom'} justify={'space-between'}>
-            <Col>
-              <Title level={3} text={data?.product_name} />
+          <Row>
+            <Col span={24}>
+              <Title level={2} text={data?.product_name} />
             </Col>
+          </Row>
 
-            <Col>
+          <Row>
+            <Col span={24}>
               <Title
                 level={4}
                 className="text-primary"
@@ -36,17 +38,12 @@ const LaptopItem: React.FC<Props> = props => {
             </Col>
           </Row>
 
-          <Row align={'middle'} justify={'space-between'}>
-            <Col>
-              <Rate defaultValue={4} disabled />
-            </Col>
-
-            <Col>
-              <Title level={5} text={'Đã bán 1,2k'} isNormal />
-            </Col>
-          </Row>
-
-          <Title level={5} text={'Hải Dương'} isNormal className="mt-2" />
+          <Title 
+            level={5} 
+            text={`Còn hàng: ${data?.quantity || 0}`} 
+            isNormal 
+            className="mt-2 text-gray-600" 
+          />
         </div>
       </div>
     </Link>
