@@ -17,11 +17,15 @@ import {
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import {
+  convertGhnStatus,
   convertOrderStatus,
   convertPaymentStatus,
   getPaymentMethodLabel,
   getStatusColor
 } from '@/src/constant/constant'
+import axios from 'axios'
+import LoadingSpinner from '@/src/components/LoadingSpinner'
+import { useLoading } from '@/src/hooks/useLoading'
 
 enum PaymentMethod {
   vnpay = 'VNPAY',
@@ -40,6 +44,7 @@ interface OrderType {
   receiver_name: string
   receiver_phone: string
   fee_transport: number
+  order_code_transport: string
   orderItems: {
     product_name: string
     total_price: number
@@ -47,13 +52,15 @@ interface OrderType {
     price: number
     photo_url: string
   }[]
+  ghn_status?: string // Thêm trường để chứa thông tin status từ GHN
 }
 
 const Order: React.FC = () => {
   const [orders, setOrders] = useState<OrderType[]>([])
-  const [loading, setLoading] = useState(false)
+  const { isLoading, startLoading, stopLoading } = useLoading()
   const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [ghnStatus, setGhnStatus] = useState<string>('') // Trạng thái GHN sẽ được lưu ở đây
 
   const [page, setPage] = useState<number>(1)
   const pageSize = 6
@@ -62,7 +69,7 @@ const Order: React.FC = () => {
   const [searchKey, setSearchKey] = useState<string>('')
 
   const fetchOrders = async () => {
-    setLoading(true)
+    startLoading()
     try {
       let url = `http://localhost:3001/order/test?page=${page}&page_size=${pageSize}`
       if (searchKey.trim()) {
@@ -76,7 +83,7 @@ const Order: React.FC = () => {
       console.error('Lỗi khi lấy đơn hàng:', error)
       message.error('Không thể tải danh sách đơn hàng!')
     } finally {
-      setLoading(false)
+      stopLoading()
     }
   }
 
@@ -89,14 +96,39 @@ const Order: React.FC = () => {
     fetchOrders()
   }
 
-  const handleViewOrder = (order: OrderType) => {
+  const handleViewOrder = async (order: OrderType) => {
     setSelectedOrder(order)
     setIsModalVisible(true)
+    startLoading()
+
+    try {
+      const response: any = await mainAxios.post(
+        'http://localhost:3001/ghn/tracking_order',
+        {
+          order_code: order.order_code_transport
+        },
+        {
+          headers: {
+            Token: process.env.GHN_TOKEN
+          }
+        }
+      )
+
+      if (response?.data) {
+        setGhnStatus(response.data.status)
+      }
+    } catch (error) {
+      console.error('Lỗi khi lấy trạng thái đơn hàng từ GHN:', error)
+      message.error('Không thể lấy trạng thái đơn hàng từ GHN!')
+    } finally {
+      stopLoading()
+    }
   }
 
   const handleCloseModal = () => {
     setIsModalVisible(false)
     setSelectedOrder(null)
+    setGhnStatus('')
   }
 
   const columns: ColumnsType<OrderType> = [
@@ -123,19 +155,26 @@ const Order: React.FC = () => {
       render: (_, record) => <Title level={5} text={record.order_code} />
     },
     {
+      title: 'Mã đơn vị vận chuyển',
+      dataIndex: 'order_code',
+      render: (_, record) => (
+        <Title level={5} text={record.order_code_transport} />
+      )
+    },
+    {
       title: 'Tổng tiền',
       dataIndex: 'total_price',
       render: (_, record) => (
         <Title level={5} text={`${formatPriceVND(record.total_price)} VNĐ`} />
       )
     },
-    {
-      title: 'Trạng thái đơn hàng',
-      dataIndex: 'status',
-      render: (_, record) => (
-        <Title level={5} text={convertOrderStatus(record.status)} />
-      )
-    },
+    // {
+    //   title: 'Trạng thái đơn hàng',
+    //   dataIndex: 'status',
+    //   render: (_, record) => (
+    //     <Title level={5} text={convertOrderStatus(record.status)} />
+    //   )
+    // },
     {
       title: 'Phương thức thanh toán',
       dataIndex: 'payment_type',
@@ -164,6 +203,7 @@ const Order: React.FC = () => {
 
   return (
     <div className="rounded-lg bg-white p-6">
+      {isLoading && <LoadingSpinner />}
       <Row justify="space-between" align="middle" className="mb-4">
         <Title level={3} text="Danh sách đơn hàng" />
 
@@ -182,11 +222,7 @@ const Order: React.FC = () => {
         </Row>
       </Row>
 
-      {loading ? (
-        <Row justify="center" className="mt-6">
-          <Spin />
-        </Row>
-      ) : orders.length > 0 ? (
+      {orders.length > 0 ? (
         <>
           <Table columns={columns} dataSource={orders} pagination={false} />
           <Row justify="center" className="mt-4">
@@ -244,6 +280,14 @@ const Order: React.FC = () => {
                 </div>
               )}
             />
+            <div className="mb-4 rounded-md p-4">
+              <p className="mb-1 inline-block text-lg font-semibold">
+                Trạng thái đơn hàng:
+              </p>
+              <p className="ml-2 inline-block text-lg font-semibold text-green-500">
+                {convertGhnStatus(ghnStatus)}
+              </p>
+            </div>
 
             <div className="mb-4 rounded-md bg-gray-100 p-4">
               <p className="mb-1 text-lg font-semibold">Địa chỉ người nhận:</p>

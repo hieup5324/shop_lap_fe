@@ -70,3 +70,22 @@ export const getStatusColor = (status: string) => {
       return 'gray'
   }
 }
+
+export const convertGhnStatus = (status: string): string => {
+  const statusMap: { [key: string]: string } = {
+    ready_to_pick: 'Đơn hàng đang được chuẩn bị',
+    picking: 'Nhân viên đang lấy hàng',
+    cancel: 'Hủy đơn hàng',
+    money_collect_picking: 'Đang thu tiền người gửi',
+    picked: 'Nhân viên đã lấy hàng',
+    storing: 'Hàng đang nằm ở kho',
+    delivering: 'Đang giao hàng',
+    delivered: 'Đã giao hàng',
+    return: 'Trả hàng',
+    delivery_fail: 'Giao hàng không thành công',
+    damage: 'Hàng bị hỏng',
+    lost: 'Hàng bị mất'
+  }
+
+  return statusMap[status] || 'Trạng thái không xác định'
+}

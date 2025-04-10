@@ -14,8 +14,9 @@
     "@types/node": "18.15.10",
     "@types/react": "18.0.30",
     "@types/react-dom": "18.0.11",
-    "antd": "^5.4.2",
-    "axios": "^1.3.4",
+    "@types/styled-components": "^5.1.34",
+    "antd": "^5.24.6",
+    "axios": "^1.8.4",
     "eslint": "8.36.0",
     "eslint-config-next": "13.2.4",
     "jwt-decode": "^3.1.2",
@@ -24,6 +25,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-redux": "^8.0.5",
+    "styled-components": "^6.1.17",
     "typescript": "5.0.2"
   },
   "devDependencies": {

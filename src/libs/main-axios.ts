@@ -8,6 +8,7 @@ import axios, {
 import Router from 'next/router'
 import { deleteCookie, getCookie } from '../utils/cookie'
 import COOKIE_KEY from '../shared/cookie-key'
+import { setupInterceptors } from '@/src/utils/axios'
 
 class MainAxios {
   private static instance: AxiosInstance
@@ -47,10 +48,16 @@ class MainAxios {
 }
 
 const mainAxios = MainAxios.getInstance({
-  // baseURL: process.env.NEXT_PUBLIC_BASE_API_URL,
+  baseURL: process.env.REACT_APP_API_URL,
+  timeout: 10000,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' }
 })
+
+// Setup interceptors
+export const setupMainAxiosInterceptors = (startLoading: () => void, stopLoading: () => void) => {
+  setupInterceptors(startLoading, stopLoading)
+}
 
 mainAxios.interceptors.request.use(
   (config: InternalAxiosRequestConfig<any>) => {

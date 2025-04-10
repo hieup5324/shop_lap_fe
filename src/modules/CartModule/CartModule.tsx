@@ -17,6 +17,8 @@ import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { Trash2, Eye } from 'lucide-react'
 import { useRouter } from 'next/router'
+import LoadingSpinner from '@/src/components/LoadingSpinner'
+import { useLoading } from '@/src/hooks/useLoading'
 const { Text } = Typography
 interface DataType {
   id: number
@@ -30,7 +32,7 @@ const CartModule: React.FC = () => {
   const [records, setRecords] = useState<DataType[]>([])
   const [totalCost, setTotalCost] = useState<number>(0)
   const [productsInCart, setProductsInCart] = useState<any[]>([])
-  const [isCallingApi, setIsCallingApi] = useState(false)
+  const { isLoading, startLoading, stopLoading } = useLoading()
   const [isOrdering, setIsOrdering] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
@@ -112,7 +114,7 @@ const CartModule: React.FC = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        setIsCallingApi(true)
+        startLoading()
         const response: any = await mainAxios.get('http://localhost:3001/cart')
 
         if (response?.items) {
@@ -125,7 +127,7 @@ const CartModule: React.FC = () => {
         message.error('Không thể tải giỏ hàng!')
         setProductsInCart([])
       } finally {
-        setIsCallingApi(false)
+        stopLoading()
       }
     }
 
@@ -161,6 +163,7 @@ const CartModule: React.FC = () => {
 
   const handleDeleteItem = async (record: DataType) => {
     try {
+      startLoading()
       await mainAxios.delete(`http://localhost:3001/cart/${record.id}`)
 
       const updatedCart = productsInCart.filter(
@@ -172,6 +175,8 @@ const CartModule: React.FC = () => {
     } catch (error) {
       console.error('Lỗi khi xóa sản phẩm:', error)
       message.error('Không thể xóa sản phẩm!')
+    } finally {
+      stopLoading()
     }
   }
 
@@ -185,6 +190,7 @@ const CartModule: React.FC = () => {
     }
 
     try {
+      startLoading()
       await mainAxios.patch('http://localhost:3001/cart', {
         productId,
         quantity: newQuantity
@@ -199,6 +205,8 @@ const CartModule: React.FC = () => {
     } catch (error) {
       console.error('Lỗi khi cập nhật số lượng:', error)
       message.error('Không thể cập nhật số lượng!')
+    } finally {
+      stopLoading()
     }
   }
 
@@ -209,6 +217,7 @@ const CartModule: React.FC = () => {
     }
 
     setIsOrdering(true)
+    startLoading()
 
     try {
       const response: any = await mainAxios.post(
@@ -246,12 +255,13 @@ const CartModule: React.FC = () => {
       )
     } finally {
       setIsOrdering(false)
+      stopLoading()
     }
   }
 
   const handleViewProduct = async (productId: number) => {
     try {
-      setIsCallingApi(true)
+      startLoading()
       const response = await mainAxios.get(
         `http://localhost:3001/products/${productId}`
       )
@@ -261,7 +271,7 @@ const CartModule: React.FC = () => {
       console.error('Lỗi khi lấy thông tin sản phẩm:', error)
       message.error('Không thể lấy thông tin sản phẩm!')
     } finally {
-      setIsCallingApi(false)
+      stopLoading()
     }
   }
 
@@ -342,6 +352,7 @@ const CartModule: React.FC = () => {
 
   return (
     <div className="rounded-lg bg-white p-6">
+      {isLoading && <LoadingSpinner />}
       <Title level={3} text="Giỏ hàng của bạn" className="mb-4" />
 
       <Table columns={columns} dataSource={records || []} pagination={false} />
@@ -432,7 +443,7 @@ const CartModule: React.FC = () => {
             disabled={!selectedDistrict}
           />
         </Col>
-        <Col span={6}>
+        {/* <Col span={6}>
           <Text strong className="invisible">
             Tính phí
           </Text>
@@ -443,7 +454,7 @@ const CartModule: React.FC = () => {
             disabled={!selectedWard}
             className="w-full"
           />
-        </Col>
+        </Col> */}
       </Row>
 
       <Row gutter={16} className="mt-4">
