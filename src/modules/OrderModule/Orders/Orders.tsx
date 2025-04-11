@@ -12,7 +12,9 @@ import {
   List,
   Avatar,
   Pagination,
-  Input
+  Input,
+  Select,
+  DatePicker
 } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
@@ -26,6 +28,7 @@ import {
 import axios from 'axios'
 import LoadingSpinner from '@/src/components/LoadingSpinner'
 import { useLoading } from '@/src/hooks/useLoading'
+import dayjs from 'dayjs'
 
 enum PaymentMethod {
   vnpay = 'VNPAY',
@@ -60,7 +63,10 @@ const Order: React.FC = () => {
   const { isLoading, startLoading, stopLoading } = useLoading()
   const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
-  const [ghnStatus, setGhnStatus] = useState<string>('') // Trạng thái GHN sẽ được lưu ở đây
+  const [ghnStatus, setGhnStatus] = useState<string>('')
+  const [paymentStatus, setPaymentStatus] = useState<string>('')
+  const [fromDate, setFromDate] = useState<string>('')
+  const [toDate, setToDate] = useState<string>('')
 
   const [page, setPage] = useState<number>(1)
   const pageSize = 6
@@ -74,6 +80,17 @@ const Order: React.FC = () => {
       let url = `http://localhost:3001/order/test?page=${page}&page_size=${pageSize}`
       if (searchKey.trim()) {
         url += `&search=${searchKey.trim()}`
+      }
+      if (paymentStatus) {
+        url += `&payment_status=${paymentStatus}`
+      }
+      if (fromDate || toDate) {
+        if (fromDate) {
+          url += `&from_date=${fromDate}`
+        }
+        if (toDate) {
+          url += `&to_date=${toDate}`
+        }
       }
 
       const response: any = await mainAxios.get(url)
@@ -89,7 +106,7 @@ const Order: React.FC = () => {
 
   useEffect(() => {
     fetchOrders()
-  }, [page])
+  }, [page, paymentStatus, fromDate, toDate])
 
   const handleSearch = () => {
     setPage(1)
@@ -145,7 +162,7 @@ const Order: React.FC = () => {
       render: (_, record) => (
         <Title
           level={5}
-          text={new Date(record.createdAt).toLocaleDateString()}
+          text={dayjs(record.createdAt).format('DD/MM/YYYY')}
         />
       )
     },
@@ -162,19 +179,19 @@ const Order: React.FC = () => {
       )
     },
     {
+      title: 'Phí vận chuyển',
+      dataIndex: 'status',
+      render: (_, record) => (
+        <Title level={5} text={`${formatPriceVND(record.fee_transport)} VNĐ`} />
+      )
+    },
+    {
       title: 'Tổng tiền',
       dataIndex: 'total_price',
       render: (_, record) => (
         <Title level={5} text={`${formatPriceVND(record.total_price)} VNĐ`} />
       )
     },
-    // {
-    //   title: 'Trạng thái đơn hàng',
-    //   dataIndex: 'status',
-    //   render: (_, record) => (
-    //     <Title level={5} text={convertOrderStatus(record.status)} />
-    //   )
-    // },
     {
       title: 'Phương thức thanh toán',
       dataIndex: 'payment_type',
@@ -205,21 +222,90 @@ const Order: React.FC = () => {
     <div className="rounded-lg bg-white p-6">
       {isLoading && <LoadingSpinner />}
       <Row justify="space-between" align="middle" className="mb-4">
-        <Title level={3} text="Danh sách đơn hàng" />
+        <Col>
+          <Row align="middle" gutter={16}>
+            <Col>
+              <Row align="middle" gutter={8}>
+                <Col>
+                  <Title
+                    level={5}
+                    text="Trạng thái thanh toán:"
+                    className="mb-0"
+                  />
+                </Col>
+                <Col>
+                  <Select
+                    placeholder="Chọn trạng thái"
+                    style={{ width: 170 }}
+                    value={paymentStatus}
+                    onChange={value => {
+                      setPaymentStatus(value)
+                      setPage(1)
+                    }}
+                    options={[
+                      { label: 'Tất cả', value: '' },
+                      { label: 'Chưa thanh toán', value: 'pending' },
+                      { label: 'Thanh toán thất bại', value: 'failed' },
+                      { label: 'Đã thanh toán', value: 'success' }
+                    ]}
+                  />
+                </Col>
+              </Row>
+            </Col>
 
-        <Row gutter={16}>
-          <Col>
-            <Input
-              placeholder="Nhập mã đơn hàng..."
-              value={searchKey}
-              onChange={e => setSearchKey(e.target.value)}
-              className="min-w-[250px]"
-            />
-          </Col>
-          <Col>
-            <Button text="Tìm kiếm" type="primary" onClick={handleSearch} />
-          </Col>
-        </Row>
+            <Col>
+              <Row align="middle" gutter={8}>
+                <Col>
+                  <Title level={5} text="Lọc từ ngày:" className="mb-0" />
+                </Col>
+                <Col>
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    onChange={(date) => {
+                      setFromDate(date ? dayjs(date).format('YYYY-MM-DD') : '')
+                      setPage(1)
+                    }}
+                    style={{ width: 130 }}
+                  />
+                </Col>
+              </Row>
+            </Col>
+
+            <Col>
+              <Row align="middle" gutter={8}>
+                <Col>
+                  <Title level={5} text="Đến ngày:" className="mb-0" />
+                </Col>
+                <Col>
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    onChange={(date) => {
+                      setToDate(date ? dayjs(date).format('YYYY-MM-DD') : '')
+                      setPage(1)
+                    }}
+                    style={{ width: 130 }}
+                  />
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </Col>
+
+        <Col>
+          <Row gutter={16}>
+            <Col>
+              <Input
+                placeholder="Nhập mã đơn hàng..."
+                value={searchKey}
+                onChange={e => setSearchKey(e.target.value)}
+                className="min-w-[250px] h-[32px]"
+              />
+            </Col>
+            <Col>
+              <Button text="Tìm kiếm" type="primary" onClick={handleSearch} />
+            </Col>
+          </Row>
+        </Col>
       </Row>
 
       {orders.length > 0 ? (

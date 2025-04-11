@@ -2,7 +2,6 @@
 import { Button, Title } from '@/src/components'
 import { formatPriceVND } from '@/src/utils/format-price'
 import { Col, Rate, Row } from 'antd'
-import Image from 'next/image'
 import Link from 'next/link'
 
 interface Props {
@@ -24,7 +23,7 @@ const LaptopItem: React.FC<Props> = props => {
         <div className="h-[calc(100%-112px)] w-full">
           <Row>
             <Col span={24}>
-              <Title level={2} text={data?.product_name} />
+              <Title level={3} text={data?.product_name} />
             </Col>
           </Row>
 
@@ -38,11 +37,11 @@ const LaptopItem: React.FC<Props> = props => {
             </Col>
           </Row>
 
-          <Title 
-            level={5} 
-            text={`Còn hàng: ${data?.quantity || 0}`} 
-            isNormal 
-            className="mt-2 text-gray-600" 
+          <Title
+            level={5}
+            text={`Còn hàng: ${data?.quantity || 0}`}
+            isNormal
+            className="mt-2 text-gray-600"
           />
         </div>
       </div>

@@ -113,9 +113,9 @@ const HomeModule: React.FC = () => {
                     setPage(1)
                   }}
                   options={[
+                    { label: 'Mặc định', value: '' },
                     { label: 'Giá tăng dần', value: 'asc' },
-                    { label: 'Giá giảm dần', value: 'desc' },
-                    { label: 'Mặc định', value: '' }
+                    { label: 'Giá giảm dần', value: 'desc' }
                   ]}
                 />
               </Col>
