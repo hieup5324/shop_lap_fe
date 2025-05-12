@@ -47,6 +47,7 @@ const RegisterModal: React.FC<Props> = ({ visible = false, setVisible }) => {
           dispatch(setIsAuthenticated(true))
           setVisible(false)
           message.success(`Đăng ký thành công, chào mừng ${firstName}!`)
+          window.location.href = '/'
         }
       }
 

@@ -43,7 +43,7 @@ const Header: React.FC = () => {
     deleteCookie(COOKIE_KEY.TOKEN)
     localStorage.clear()
     dispatch(clearUserInfo())
-    window.location.reload()
+    window.location.href = '/'
   }
 
   // useEffect

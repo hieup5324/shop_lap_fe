@@ -59,6 +59,7 @@ const LoginModal: React.FC<Props> = props => {
           dispatch(setIsAuthenticated(true))
           setVisible(false)
           message.success(`Đăng nhập thành công`)
+          window.location.href = '/'
         }
       } else {
         throw new Error('Không nhận được access_token từ server.')
@@ -107,8 +108,8 @@ const LoginModal: React.FC<Props> = props => {
           if (isAuthenticatedJwt(token)) {
             dispatch(setIsAuthenticated(true))
             setVisible(false)
-
             message.success(`Đăng nhập thành công`)
+            window.location.href = '/'
           }
         }
 
