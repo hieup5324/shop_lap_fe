@@ -147,14 +147,14 @@ const CartModule: React.FC = () => {
         key: index + 1,
         name: item.productName,
         quantity: item.quantity,
-        total: item.price * item.quantity
+        total: item.price
       })
     )
 
     setRecords(mappedRecords)
 
     const total = productsInCart.reduce(
-      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+      (sum, item) => sum + (item.price || 0),
       0
     )
 

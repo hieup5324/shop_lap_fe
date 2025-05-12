@@ -41,7 +41,7 @@ const HomeModule: React.FC = () => {
     try {
       setIsCallingApi(true)
 
-      let url = `http://localhost:3001/products?page=${page}&page_size=${pageSize}`
+      let url = `http://localhost:3001/products?is_stock=true&page=${page}&page_size=${pageSize}`
 
       if (searchKey) {
         url += `&search=${searchKey}`

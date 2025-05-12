@@ -75,7 +75,7 @@ const Header: React.FC = () => {
             <TabItem href={PATH.HOME} title="LAPTOP SHOP" isHome />
             <TabItem href={PATH.CART} title="Xem giỏ hàng" />
             <TabItem href={PATH.ORDERS} title="Các đơn đặt hàng" />
-            <TabItem href={`#`} title="Tư vấn khách hàng" />
+            <TabItem href={PATH.SUPPORT} title="Tư vấn khách hàng" />
             <TabItem href={`#`} title="Flash sale" />
           </Row>
         </Col>
