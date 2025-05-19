@@ -1,6 +1,7 @@
 import LOCAL_STORAGE_KEY from '@/src/shared/local-storage-key'
 import { createFromIconfontCN, InstagramOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
+import { message } from 'antd'
 
 const IconFont = createFromIconfontCN({
   scriptUrl: '//at.alicdn.com/t/font_8d5l8fzk5b87iudi.js'
@@ -8,16 +9,31 @@ const IconFont = createFromIconfontCN({
 
 const UserInformation = () => {
   const [userData, setUserData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedUserData = localStorage.getItem(LOCAL_STORAGE_KEY.USER_INFO)
-    if (storedUserData) {
-      setUserData(JSON.parse(storedUserData))
+    try {
+      const storedUserData = localStorage.getItem(LOCAL_STORAGE_KEY.USER_INFO)
+      if (storedUserData) {
+        const parsedData = JSON.parse(storedUserData)
+        setUserData(parsedData)
+      } else {
+        message.error('Không tìm thấy thông tin người dùng')
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+      message.error('Có lỗi xảy ra khi tải thông tin người dùng')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
-  if (!userData) {
+  if (loading) {
     return <div>Loading...</div>
+  }
+
+  if (!userData) {
+    return <div>Không tìm thấy thông tin người dùng</div>
   }
 
   return (
@@ -28,6 +44,7 @@ const UserInformation = () => {
           <img
             src={userData.photo_url || '/images/avatar.jpg'}
             className="h-[74px] w-[74px] rounded-full"
+            alt="User avatar"
           />
 
           <div>
@@ -45,16 +62,15 @@ const UserInformation = () => {
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Full Name :</p>
-              {userData.first_name + ' ' + userData.last_name}
-              <p></p>
+              <p>{userData.first_name + ' ' + userData.last_name}</p>
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Mobile :</p>
-              <p>{userData.phone || ''}</p>
+              <p>{userData.phone || 'Chưa cập nhật'}</p>
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Date Of Birth :</p>
-              <p>{userData.date_of_birth}</p>
+              <p>{userData.date_of_birth || 'Chưa cập nhật'}</p>
             </div>
             <div className="flex gap-4">
               <p className="font-medium">Location :</p>

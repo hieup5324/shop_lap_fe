@@ -51,28 +51,30 @@ const LoginModal: React.FC<Props> = props => {
         { email, password }
       )
 
-      if (res?.access_token) {
-        const token = res.access_token
-        setCookie(COOKIE_KEY.TOKEN, token, 365)
-
-        if (isAuthenticatedJwt(token)) {
-          dispatch(setIsAuthenticated(true))
-          setVisible(false)
-          message.success(`Đăng nhập thành công`)
-          window.location.href = '/'
-        }
-      } else {
+      if (!res?.access_token) {
         throw new Error('Không nhận được access_token từ server.')
       }
 
-      if (res?.user) {
+      if (!res?.user) {
+        throw new Error('Không nhận được thông tin người dùng.')
+      }
+
+      const token = res.access_token
+      setCookie(COOKIE_KEY.TOKEN, token, 365)
+
+      if (isAuthenticatedJwt(token)) {
+        // Save user data first
         setLocalStorageItem(
           LOCAL_STORAGE_KEY.USER_INFO,
           JSON.stringify(res.user)
         )
         dispatch(setUserInfo(res.user))
-      } else {
-        throw new Error('Không nhận được thông tin người dùng.')
+        
+        // Then update UI state and redirect
+        dispatch(setIsAuthenticated(true))
+        setVisible(false)
+        message.success(`Đăng nhập thành công`)
+        window.location.href = '/'
       }
     } catch (error: any) {
       console.error('Lỗi đăng nhập:', error)
