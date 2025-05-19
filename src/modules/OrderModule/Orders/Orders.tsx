@@ -160,10 +160,7 @@ const Order: React.FC = () => {
       title: 'Ngày đặt hàng',
       dataIndex: 'createdAt',
       render: (_, record) => (
-        <Title
-          level={5}
-          text={dayjs(record.createdAt).format('DD/MM/YYYY')}
-        />
+        <Title level={5} text={dayjs(record.createdAt).format('DD/MM/YYYY')} />
       )
     },
     {
@@ -175,14 +172,26 @@ const Order: React.FC = () => {
       title: 'Mã đơn vị vận chuyển',
       dataIndex: 'order_code',
       render: (_, record) => (
-        <Title level={5} text={record.order_code_transport} />
+        <Title
+          level={5}
+          text={
+            record.order_code_transport ? record.order_code_transport : '---'
+          }
+        />
       )
     },
     {
       title: 'Phí vận chuyển',
       dataIndex: 'status',
       render: (_, record) => (
-        <Title level={5} text={`${formatPriceVND(record.fee_transport)} VNĐ`} />
+        <Title
+          level={5}
+          text={
+            record.fee_transport
+              ? `${formatPriceVND(record.fee_transport)} VNĐ`
+              : '---'
+          }
+        />
       )
     },
     {
@@ -261,7 +270,7 @@ const Order: React.FC = () => {
                 <Col>
                   <DatePicker
                     format="DD/MM/YYYY"
-                    onChange={(date) => {
+                    onChange={date => {
                       setFromDate(date ? dayjs(date).format('YYYY-MM-DD') : '')
                       setPage(1)
                     }}
@@ -279,7 +288,7 @@ const Order: React.FC = () => {
                 <Col>
                   <DatePicker
                     format="DD/MM/YYYY"
-                    onChange={(date) => {
+                    onChange={date => {
                       setToDate(date ? dayjs(date).format('YYYY-MM-DD') : '')
                       setPage(1)
                     }}
@@ -298,7 +307,7 @@ const Order: React.FC = () => {
                 placeholder="Nhập mã đơn hàng..."
                 value={searchKey}
                 onChange={e => setSearchKey(e.target.value)}
-                className="min-w-[250px] h-[32px]"
+                className="h-[32px] min-w-[250px]"
               />
             </Col>
             <Col>
